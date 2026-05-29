@@ -23,6 +23,7 @@ export default function CheckoutPage(): JSX.Element {
   const nameRef = useRef<HTMLInputElement | null>(null)
   const emailRef = useRef<HTMLInputElement | null>(null)
   const [loading, setLoading] = useState(false)
+  const [mpLoaded, setMpLoaded] = useState(false)
   const messageRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
@@ -46,6 +47,14 @@ export default function CheckoutPage(): JSX.Element {
       s.src = "https://sdk.mercadopago.com/js/v2"
       s.async = true
       document.body.appendChild(s)
+      // poll until SDK is available
+      const check = setInterval(() => {
+        // @ts-ignore
+        if ((window as any).MercadoPago) {
+          setMpLoaded(true)
+          clearInterval(check)
+        }
+      }, 200)
     }
   }, [])
 
@@ -153,19 +162,44 @@ export default function CheckoutPage(): JSX.Element {
       const publicKey = process.env.NEXT_PUBLIC_MERCADOPAGO_PUBLIC_KEY
       // simple validation
       if (!cardNumber || !cardMonth || !cardYear || !cardCvv) throw new Error("Preencha os dados do cartão")
-      if (!MercadoPago) throw new Error("SDK MercadoPago não carregado")
+      if (!MercadoPago || !mpLoaded) throw new Error("SDK MercadoPago não carregado — aguarde alguns segundos e tente novamente")
       // @ts-ignore
       const mp = new MercadoPago(publicKey)
       const cardData = { cardNumber: cardNumber.replace(/\s+/g, ""), expirationMonth: cardMonth, expirationYear: cardYear, securityCode: cardCvv, cardholderName: name }
-      // @ts-ignore
-      const tokenResp = await mp.card.createToken(cardData)
+
+      // try multiple tokenization entry points depending on SDK version
+      let tokenResp: any = null
+      if (mp.card && typeof mp.card.createToken === 'function') {
+        // common pattern
+        tokenResp = await mp.card.createToken(cardData)
+      } else if (typeof mp.createCardToken === 'function') {
+        tokenResp = await mp.createCardToken(cardData)
+      } else if (typeof mp.createToken === 'function') {
+        tokenResp = await mp.createToken(cardData)
+      } else {
+        throw new Error("SDK MercadoPago carregado, mas método de tokenização não encontrado. Verifique versão do SDK.")
+      }
+
       const token = tokenResp?.id || tokenResp?.token || tokenResp?.card_token?.id
       if (!token) throw new Error("Falha ao tokenizar cartão")
+
+      // try to infer card brand from token response when available
+      const cardBrand = tokenResp?.card?.brand || tokenResp?.card?.network || tokenResp?.cardholder?.brand || null
 
       const res = await fetch("/api/payment", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ amount, payment_method: "card", token, installments: method === "credit" ? installments : 1, payer: { email, first_name: name } })
+        body: JSON.stringify({
+          amount,
+          payment_method: "card",
+          token,
+          installments: method === "credit" ? installments : 1,
+          payer: { email, first_name: name },
+          // communicate to server whether user chose debit or credit
+          card_mode: method,
+          // optionally provide detected brand
+          card_brand: cardBrand
+        })
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data?.error || "Erro ao processar cartão")
@@ -258,10 +292,15 @@ export default function CheckoutPage(): JSX.Element {
                   )}
 
                   <div style={{ display: "flex", gap: 12, justifyContent: "center" }}>
-                    <button type="submit" disabled={loading} style={primaryButtonStyle()}>{loading ? "Processando..." : "Pagar"}</button>
+                    <button type="submit" disabled={loading || ((method === 'debit' || method === 'credit') && !mpLoaded)} style={primaryButtonStyle()}>{loading ? "Processando..." : "Pagar"}</button>
                     <button type="button" onClick={() => { setCardNumber(""); setCardMonth(""); setCardYear(""); setCardCvv("") }} style={secondaryButtonStyle()}>Limpar</button>
                   </div>
                 </div>
+              </div>
+            )}
+            { (method === 'debit' || method === 'credit') && !mpLoaded && (
+              <div style={{ marginTop: 8, fontSize: 13, color: 'var(--color-muted-foreground)' }}>
+                Aguardando carregamento do SDK do Mercado Pago. Aguarde alguns segundos e tente novamente.
               </div>
             )}
           </form>
