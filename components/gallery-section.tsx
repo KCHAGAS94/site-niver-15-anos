@@ -69,16 +69,16 @@ export function GallerySection() {
           {/* Navigation Arrows */}
           <div className="mb-6 flex items-center justify-center gap-4 mt-6">
             <button
-              className="swiper-button-prev flex h-10 w-10 items-center justify-center rounded-full border-2 border-primary text-primary transition-all hover:bg-primary hover:text-primary-foreground"
+              className="swiper-button-prev flex h-10 w-10 items-center justify-center rounded-full bg-transparent text-primary transition-all hover:bg-primary hover:text-primary-foreground border-0 shadow-none"
               aria-label="Imagem anterior"
             >
-              <ChevronLeft className="h-5 w-5" />
+              <ChevronLeft className="h-5 w-5 text-white" />
             </button>
             <button
-              className="swiper-button-next flex h-10 w-10 items-center justify-center rounded-full border-2 border-primary text-primary transition-all hover:bg-primary hover:text-primary-foreground"
+              className="swiper-button-next flex h-10 w-10 items-center justify-center rounded-full bg-transparent text-primary transition-all hover:bg-primary hover:text-primary-foreground border-0 shadow-none"
               aria-label="Próxima imagem"
             >
-              <ChevronRight className="h-5 w-5" />
+              <ChevronRight className="h-5 w-5 text-white" />
             </button>
           </div>
           {/* Dots Indicator */}
