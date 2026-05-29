@@ -6,13 +6,13 @@ import Autoplay from "embla-carousel-autoplay"
 import { ChevronLeft, ChevronRight, Camera } from "lucide-react"
 import { cn } from "@/lib/utils"
 
-const placeholderImages = [
-  { id: 1, alt: "Momento especial 1" },
-  { id: 2, alt: "Momento especial 2" },
-  { id: 3, alt: "Momento especial 3" },
-  { id: 4, alt: "Momento especial 4" },
-  { id: 5, alt: "Momento especial 5" },
-  { id: 6, alt: "Momento especial 6" },
+const galleryImages = [
+  { src: "/img/momento-especial-1.png", alt: "Momento especial 1" },
+  { src: "/img/momento-especial-2.png", alt: "Momento especial 2" },
+  { src: "/img/momento-especial-3.png", alt: "Momento especial 3" },
+  { src: "/img/momento-especial-4.png", alt: "Momento especial 4" },
+  { src: "/img/momento-especial-5.png", alt: "Momento especial 5" },
+  { src: "/img/momento-especial-6.png", alt: "Momento especial 6" },
 ]
 
 export function GallerySection() {
@@ -87,21 +87,21 @@ export function GallerySection() {
         {/* Carousel */}
         <div className="overflow-hidden" ref={emblaRef}>
           <div className="flex gap-4">
-            {placeholderImages.map((image, index) => (
+            {galleryImages.map((image, index) => (
               <div
-                key={image.id}
+                key={image.src}
                 className={cn(
                   "relative min-w-0 flex-[0_0_80%] md:flex-[0_0_45%] lg:flex-[0_0_30%] transition-all duration-300",
                   selectedIndex === index ? "scale-100 opacity-100" : "scale-95 opacity-70"
                 )}
               >
                 <div className="aspect-[3/4] overflow-hidden rounded-2xl bg-card shadow-lg">
-                  <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary/10 to-accent/10">
-                    <div className="text-center">
-                      <Camera className="mx-auto h-8 w-8 text-primary/40" />
-                      <p className="mt-2 text-xs text-muted-foreground">{image.alt}</p>
-                    </div>
-                  </div>
+                  <img
+                    src={image.src}
+                    alt={image.alt}
+                    className="h-full w-full object-cover"
+                    loading="lazy"
+                  />
                 </div>
               </div>
             ))}
@@ -110,7 +110,7 @@ export function GallerySection() {
 
         {/* Dots Indicator */}
         <div className="mt-8 flex items-center justify-center gap-2">
-          {placeholderImages.map((_, index) => (
+          {galleryImages.map((_, index) => (
             <button
               key={index}
               onClick={() => emblaApi?.scrollTo(index)}
