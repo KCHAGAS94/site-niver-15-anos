@@ -1,12 +1,15 @@
 "use client"
 
-import { useState, useCallback, useEffect } from "react"
-import useEmblaCarousel from "embla-carousel-react"
-import Autoplay from "embla-carousel-autoplay"
-import { ChevronLeft, ChevronRight, Camera } from "lucide-react"
-import { cn } from "@/lib/utils"
 
-const baseGalleryImages = [
+import { useRef } from "react"
+import { Swiper, SwiperSlide } from "swiper/react"
+import { Navigation, Pagination, Autoplay } from "swiper/modules"
+import "swiper/css"
+import "swiper/css/navigation"
+import "swiper/css/pagination"
+import { ChevronLeft, ChevronRight, Camera } from "lucide-react"
+
+const galleryImages = [
   { src: "/img/momento-especial-1.png", alt: "Momento especial 1" },
   { src: "/img/momento-especial-2.png", alt: "Momento especial 2" },
   { src: "/img/momento-especial-3.png", alt: "Momento especial 3" },
@@ -15,41 +18,8 @@ const baseGalleryImages = [
   { src: "/img/momento-especial-6.png", alt: "Momento especial 6" },
 ]
 
-// Duplicar slides para simular carrossel infinito visualmente
-const galleryImages = [...baseGalleryImages, ...baseGalleryImages]
-
 export function GallerySection() {
-  const [emblaRef, emblaApi] = useEmblaCarousel(
-    { 
-      loop: true, 
-      align: "center",
-      slidesToScroll: 1,
-      containScroll: 'trimSnaps',
-    },
-    [Autoplay({ delay: 4000, stopOnInteraction: false })]
-  )
-  
-  const [selectedIndex, setSelectedIndex] = useState(0)
-  const [canScrollPrev, setCanScrollPrev] = useState(false)
-  const [canScrollNext, setCanScrollNext] = useState(false)
-
-  const scrollPrev = useCallback(() => emblaApi?.scrollPrev(), [emblaApi])
-  const scrollNext = useCallback(() => emblaApi?.scrollNext(), [emblaApi])
-
-  const onSelect = useCallback(() => {
-    if (!emblaApi) return
-    setSelectedIndex(emblaApi.selectedScrollSnap())
-    setCanScrollPrev(emblaApi.canScrollPrev())
-    setCanScrollNext(emblaApi.canScrollNext())
-  }, [emblaApi])
-
-  useEffect(() => {
-    if (!emblaApi) return
-    onSelect()
-    emblaApi.on("select", onSelect)
-    emblaApi.on("reInit", onSelect)
-  }, [emblaApi, onSelect])
-
+  const swiperRef = useRef(null)
   return (
     <section id="galeria" className="relative bg-muted/50 py-20 md:py-32">
       <div className="container mx-auto px-4">
@@ -68,69 +38,52 @@ export function GallerySection() {
           </div>
         </div>
 
-        {/* Navigation Arrows */}
-        <div className="mb-6 flex items-center justify-center gap-4">
-          <button
-            onClick={scrollPrev}
-            disabled={!canScrollPrev}
-            className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-primary text-primary transition-all hover:bg-primary hover:text-primary-foreground disabled:opacity-50"
-            aria-label="Imagem anterior"
-          >
-            <ChevronLeft className="h-5 w-5" />
-          </button>
-          <button
-            onClick={scrollNext}
-            disabled={!canScrollNext}
-            className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-primary text-primary transition-all hover:bg-primary hover:text-primary-foreground disabled:opacity-50"
-            aria-label="Próxima imagem"
-          >
-            <ChevronRight className="h-5 w-5" />
-          </button>
-        </div>
-
-        {/* Carousel */}
-        <div className="overflow-x-hidden px-6" ref={emblaRef}>
-          <div className="flex gap-6">
-            {galleryImages.map((image, idx) => (
-              <div
-                key={image.src + '-' + idx}
-                className={
-                  [
-                    "flex-[0_0_100%] w-full sm:flex-[0_0_auto] sm:max-w-[350px] sm:mx-auto",
-                    idx === 0 ? "ml-6" : "",
-                    idx === galleryImages.length - 1 ? "mr-6" : ""
-                  ].join(" ")
-                }
-              >
-                <div className="aspect-[3/4] overflow-hidden rounded-2xl bg-card shadow-lg">
-                  <img
-                    src={image.src}
-                    alt={image.alt}
-                    className="h-full w-full object-cover"
-                    loading="lazy"
-                  />
-                </div>
+        {/* Carousel Swiper */}
+        <Swiper
+          ref={swiperRef}
+          modules={[Navigation, Pagination, Autoplay]}
+          spaceBetween={24}
+          slidesPerView={1}
+          loop={true}
+          centeredSlides={true}
+          autoplay={{ delay: 4000, disableOnInteraction: false }}
+          navigation={{
+            nextEl: '.swiper-button-next',
+            prevEl: '.swiper-button-prev',
+          }}
+          pagination={{ clickable: true, el: '.swiper-pagination' }}
+          className="w-full max-w-[400px] mx-auto"
+        >
+          {galleryImages.map((image, idx) => (
+            <SwiperSlide key={image.src + '-' + idx}>
+              <div className="aspect-[3/4] overflow-hidden rounded-2xl bg-card shadow-lg">
+                <img
+                  src={image.src}
+                  alt={image.alt}
+                  className="h-full w-full object-cover"
+                  loading="lazy"
+                />
               </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Dots Indicator */}
-        <div className="mt-8 flex items-center justify-center gap-2">
-          {galleryImages.map((_, index) => (
-            <button
-              key={index}
-              onClick={() => emblaApi?.scrollTo(index)}
-              className={cn(
-                "h-2 w-2 rounded-full transition-all",
-                selectedIndex === index
-                  ? "w-6 bg-primary"
-                  : "bg-primary/30 hover:bg-primary/50"
-              )}
-              aria-label={`Ir para imagem ${index + 1}`}
-            />
+            </SwiperSlide>
           ))}
-        </div>
+          {/* Navigation Arrows */}
+          <div className="mb-6 flex items-center justify-center gap-4 mt-6">
+            <button
+              className="swiper-button-prev flex h-10 w-10 items-center justify-center rounded-full border-2 border-primary text-primary transition-all hover:bg-primary hover:text-primary-foreground"
+              aria-label="Imagem anterior"
+            >
+              <ChevronLeft className="h-5 w-5" />
+            </button>
+            <button
+              className="swiper-button-next flex h-10 w-10 items-center justify-center rounded-full border-2 border-primary text-primary transition-all hover:bg-primary hover:text-primary-foreground"
+              aria-label="Próxima imagem"
+            >
+              <ChevronRight className="h-5 w-5" />
+            </button>
+          </div>
+          {/* Dots Indicator */}
+          <div className="swiper-pagination mt-8 flex items-center justify-center gap-2" />
+        </Swiper>
       </div>
     </section>
   )
