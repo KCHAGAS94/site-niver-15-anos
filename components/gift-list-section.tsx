@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from 'next/navigation'
 import { Gift, Heart, ExternalLink, Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
@@ -60,6 +61,7 @@ const giftList: GiftItem[] = [
 
 export function GiftListSection() {
   const [selectedGifts, setSelectedGifts] = useState<number[]>([])
+  const router = useRouter()
 
   const toggleGift = (id: number) => {
     setSelectedGifts((prev) =>
@@ -179,7 +181,18 @@ export function GiftListSection() {
                 }, 0)
               )}
             </p>
-            <Button className="mt-4 gap-2 bg-primary text-primary-foreground hover:bg-primary/90">
+            <Button className="mt-4 gap-2 bg-primary text-primary-foreground hover:bg-primary/90" onClick={() => {
+              const total = selectedGifts.reduce((total, id) => {
+                const gift = giftList.find((g) => g.id === id)
+                return total + (gift?.price || 0)
+              }, 0)
+              try {
+                sessionStorage.setItem('checkoutSelection', JSON.stringify({ items: selectedGifts, total }))
+              } catch (e) {
+                // ignore
+              }
+              router.push('/checkout')
+            }}>
               <ExternalLink className="h-4 w-4" />
               Finalizar Presente
             </Button>
