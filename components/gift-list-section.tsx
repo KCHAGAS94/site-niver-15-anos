@@ -64,9 +64,11 @@ export function GiftListSection() {
   const router = useRouter()
 
   const toggleGift = (id: number) => {
-    setSelectedGifts((prev) =>
-      prev.includes(id) ? prev.filter((giftId) => giftId !== id) : [...prev, id]
-    )
+    setSelectedGifts((prev) => {
+      const next = prev.includes(id) ? prev.filter((giftId) => giftId !== id) : [...prev, id]
+      try { console.debug('[GiftList] toggleGift', { id, before: prev, after: next }) } catch (e) {}
+      return next
+    })
   }
 
   const formatPrice = (price: number) => {
@@ -167,6 +169,13 @@ export function GiftListSection() {
         </div>
 
         {/* Selected Gifts Summary */}
+        <div style={{ position: 'relative' }}>
+          <div style={{ position: 'absolute', right: 0, top: -40, color: 'var(--color-muted-foreground)', fontSize: 13 }}>
+            {/* debug visible counter */}
+            Selecionados: {selectedGifts.length}
+          </div>
+        </div>
+
         {selectedGifts.length > 0 && (
           <div className="mx-auto mt-12 max-w-lg rounded-2xl bg-primary/10 p-6 text-center">
             <p className="text-sm text-muted-foreground">

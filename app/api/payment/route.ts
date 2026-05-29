@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server'
-const mercadopago = require('mercadopago')
+const { MercadoPagoConfig, Payment } = require('mercadopago')
 
-mercadopago.configure({ access_token: process.env.MP_ACCESS_TOKEN })
+const mpConfig = new MercadoPagoConfig({ accessToken: process.env.MP_ACCESS_TOKEN })
+const paymentClient = new Payment(mpConfig)
 
 export async function POST(req: Request) {
   try {
@@ -13,17 +14,19 @@ export async function POST(req: Request) {
     }
 
     if (payment_method === 'pix') {
-      const payment = await mercadopago.payment.create({
-        transaction_amount: Number(amount),
-        description: body.description || 'Pagamento',
-        payment_method_id: 'pix',
-        payer: {
-          email: payer?.email || 'no-reply@example.com',
-          first_name: payer?.first_name || payer?.name || ''
+      const payment = await paymentClient.create({
+        body: {
+          transaction_amount: Number(amount),
+          description: body.description || 'Pagamento',
+          payment_method_id: 'pix',
+          payer: {
+            email: payer?.email || 'no-reply@example.com',
+            first_name: payer?.first_name || payer?.name || ''
+          }
         }
       })
 
-      return NextResponse.json(payment.response)
+      return NextResponse.json(payment)
     }
 
     if (payment_method === 'card') {
@@ -31,19 +34,21 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: 'card token required' }, { status: 400 })
       }
 
-      const payment = await mercadopago.payment.create({
-        transaction_amount: Number(amount),
-        token,
-        description: body.description || 'Pagamento com cartão',
-        installments: body.installments || 1,
-        payment_method_id: body.payment_method_id || 'visa',
-        payer: {
-          email: payer?.email || 'no-reply@example.com',
-          first_name: payer?.first_name || payer?.name || ''
+      const payment = await paymentClient.create({
+        body: {
+          transaction_amount: Number(amount),
+          token,
+          description: body.description || 'Pagamento com cartão',
+          installments: body.installments || 1,
+          payment_method_id: body.payment_method_id || 'visa',
+          payer: {
+            email: payer?.email || 'no-reply@example.com',
+            first_name: payer?.first_name || payer?.name || ''
+          }
         }
       })
 
-      return NextResponse.json(payment.response)
+      return NextResponse.json(payment)
     }
 
     return NextResponse.json({ error: 'unsupported payment_method' }, { status: 400 })
