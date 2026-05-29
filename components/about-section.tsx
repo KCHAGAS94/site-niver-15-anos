@@ -29,15 +29,15 @@ export function AboutSection() {
 
         {/* Content Grid */}
         <div className="mx-auto grid max-w-5xl gap-12 md:grid-cols-2 md:items-center">
-          {/* Photo Placeholder */}
+          {/* Foto da Vitória */}
           <div className="relative mx-auto w-full max-w-sm">
             <div className="aspect-[3/4] overflow-hidden rounded-2xl bg-gradient-to-br from-primary/20 to-accent/20 shadow-2xl">
-              <div className="flex h-full w-full items-center justify-center bg-muted">
-                <div className="text-center">
-                  <Sparkles className="mx-auto h-12 w-12 text-primary/40" />
-                  <p className="mt-4 text-sm text-muted-foreground">Foto da Vitória</p>
-                </div>
-              </div>
+              <img 
+                src="/img/foto1.png"
+                alt="Foto da Vitória"
+                className="h-full w-full object-cover object-top"
+                loading="lazy"
+              />
             </div>
             {/* Decorative frame */}
             <div className="absolute -bottom-4 -right-4 -z-10 h-full w-full rounded-2xl border-2 border-accent/30" />
