@@ -5,10 +5,10 @@ import { ChevronDown } from "lucide-react"
 export function HeroSection() {
   return (
     <section className="relative h-screen w-full overflow-hidden">
-      {/* Background Image Placeholder */}
-      <div className="absolute inset-0 bg-gradient-to-b from-primary/20 via-primary/10 to-background">
-        <div className="absolute inset-0 bg-[url('/hero-placeholder.jpg')] bg-cover bg-center bg-no-repeat opacity-60" />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/20 to-background" />
+      {/* Background Image da aniversariante */}
+      <div className="absolute inset-0">
+        <div className="absolute inset-0 bg-[url('/img/capa.png')] bg-cover bg-center bg-no-repeat opacity-80" />
+        <div className="absolute inset-0 bg-black/60" />
       </div>
 
       {/* Content */}
