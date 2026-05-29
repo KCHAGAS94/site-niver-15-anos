@@ -6,7 +6,7 @@ import Autoplay from "embla-carousel-autoplay"
 import { ChevronLeft, ChevronRight, Camera } from "lucide-react"
 import { cn } from "@/lib/utils"
 
-const galleryImages = [
+const baseGalleryImages = [
   { src: "/img/momento-especial-1.png", alt: "Momento especial 1" },
   { src: "/img/momento-especial-2.png", alt: "Momento especial 2" },
   { src: "/img/momento-especial-3.png", alt: "Momento especial 3" },
@@ -15,12 +15,16 @@ const galleryImages = [
   { src: "/img/momento-especial-6.png", alt: "Momento especial 6" },
 ]
 
+// Duplicar slides para simular carrossel infinito visualmente
+const galleryImages = [...baseGalleryImages, ...baseGalleryImages]
+
 export function GallerySection() {
   const [emblaRef, emblaApi] = useEmblaCarousel(
     { 
       loop: true, 
       align: "center",
       slidesToScroll: 1,
+      containScroll: 'trimSnaps',
     },
     [Autoplay({ delay: 4000, stopOnInteraction: false })]
   )
@@ -85,15 +89,18 @@ export function GallerySection() {
         </div>
 
         {/* Carousel */}
-        <div className="overflow-hidden" ref={emblaRef}>
-          <div className="flex gap-4">
-            {galleryImages.map((image, index) => (
+        <div className="overflow-x-hidden px-6" ref={emblaRef}>
+          <div className="flex gap-6">
+            {galleryImages.map((image, idx) => (
               <div
-                key={image.src}
-                className={cn(
-                  "relative min-w-0 flex-[0_0_80%] md:flex-[0_0_45%] lg:flex-[0_0_30%] transition-all duration-300",
-                  selectedIndex === index ? "scale-100 opacity-100" : "scale-95 opacity-70"
-                )}
+                key={image.src + '-' + idx}
+                className={
+                  [
+                    "flex-[0_0_100%] w-full sm:flex-[0_0_auto] sm:max-w-[350px] sm:mx-auto",
+                    idx === 0 ? "ml-6" : "",
+                    idx === galleryImages.length - 1 ? "mr-6" : ""
+                  ].join(" ")
+                }
               >
                 <div className="aspect-[3/4] overflow-hidden rounded-2xl bg-card shadow-lg">
                   <img
