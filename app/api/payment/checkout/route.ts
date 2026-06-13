@@ -13,6 +13,10 @@ export async function POST(req: Request) {
     const title = body?.title ?? 'Compra'
     const quantity = Number(body?.quantity ?? 1)
 
+    // Debug logging to help diagnose 'not_result_by_params' in production.
+    // These logs are safe: they don't include the access token.
+    console.log('[MP Checkout] incoming request', { amount, title, quantity })
+
     if (!amount || Number.isNaN(amount) || amount <= 0) {
       return NextResponse.json({ error: 'invalid amount' }, { status: 400 })
     }
@@ -53,12 +57,17 @@ export async function POST(req: Request) {
 
     const data = await resp.json()
 
+    // Log Mercado Pago response for debugging (will appear in PM2 logs).
+    console.log('[MP Checkout] mercado pago response status', resp.status)
+    console.log('[MP Checkout] mercado pago response body', JSON.stringify(data))
+
     if (!resp.ok) {
       return NextResponse.json({ error: data }, { status: resp.status })
     }
 
     return NextResponse.json({ init_point: data.init_point ?? null, sandbox_init_point: data.sandbox_init_point ?? null, preference_id: data.id ?? null })
   } catch (err: any) {
+    console.error('[MP Checkout] unexpected error', err)
     return NextResponse.json({ error: err?.message ?? String(err) }, { status: 500 })
   }
 }
