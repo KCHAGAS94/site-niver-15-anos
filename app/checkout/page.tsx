@@ -211,6 +211,34 @@ export default function CheckoutPage(): JSX.Element {
     }
   }
 
+  async function startCheckoutPro() {
+    setLoading(true)
+    setMessage(null)
+    try {
+      // simple validation
+      if (!amount || Number.isNaN(Number(amount)) || Number(amount) <= 0) throw new Error('Valor inválido')
+
+      const res = await fetch('/api/payment/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amount, title: 'Presente', quantity: 1 })
+      })
+
+      const data = await res.json()
+      if (!res.ok) throw new Error(data?.error || 'Erro ao criar preferência')
+
+      const initPoint = data.init_point || data.sandbox_init_point
+      if (!initPoint) throw new Error('init_point não retornado pelo servidor')
+
+      // redireciona para o Checkout Pro do Mercado Pago
+      window.location.href = initPoint
+    } catch (err: any) {
+      setMessage(err?.message ?? String(err))
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
     <div style={{ display: "flex", justifyContent: "center", padding: 36 }}>
       <div style={{ width: "100%", maxWidth: 820 }}>
@@ -294,6 +322,9 @@ export default function CheckoutPage(): JSX.Element {
                   <div style={{ display: "flex", gap: 12, justifyContent: "center" }}>
                     <button type="submit" disabled={loading || ((method === 'debit' || method === 'credit') && !mpLoaded)} style={primaryButtonStyle()}>{loading ? "Processando..." : "Pagar"}</button>
                     <button type="button" onClick={() => { setCardNumber(""); setCardMonth(""); setCardYear(""); setCardCvv("") }} style={secondaryButtonStyle()}>Limpar</button>
+                    {(method === 'credit' || method === 'debit') && (
+                      <button type="button" onClick={startCheckoutPro} disabled={loading} style={{ ...primaryButtonStyle(), background: '#0ea5a4' }}>Checkout Pro</button>
+                    )}
                   </div>
                 </div>
               </div>
