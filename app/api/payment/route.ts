@@ -1,10 +1,15 @@
 import { NextResponse } from 'next/server'
 import { MercadoPagoConfig, Payment } from 'mercadopago'
 
-const mpConfig = new MercadoPagoConfig({ accessToken: process.env.MP_ACCESS_TOKEN || '' })
+const ACCESS_TOKEN = process.env.MERCADOPAGO_ACCESS_TOKEN ?? process.env.MP_ACCESS_TOKEN ?? ''
+const mpConfig = new MercadoPagoConfig({ accessToken: ACCESS_TOKEN })
 const paymentClient = new Payment(mpConfig)
 
 export async function POST(req: Request) {
+  if (!ACCESS_TOKEN) {
+    return NextResponse.json({ error: 'MercadoPago access token not configured' }, { status: 500 })
+  }
+
   try {
     const body = await req.json()
     const { amount, payment_method, payer, token } = body
@@ -36,22 +41,49 @@ export async function POST(req: Request) {
 
       // for debit payments force 1 installment
       const installments = payment_method === 'debit' ? 1 : (body.installments || 1)
+      const createBody: any = {
+        transaction_amount: Number(amount),
+        token,
+        description: body.description || 'Pagamento com cartão',
+        installments,
+        payment_method_id: body.payment_method_id || body.card_brand || 'visa',
+        payer: {
+          email: payer?.email || 'no-reply@example.com',
+          first_name: payer?.first_name || payer?.name || ''
+        }
+      }
 
-      const payment = await paymentClient.create({
-        body: {
-          transaction_amount: Number(amount),
-          token,
-          description: body.description || 'Pagamento com cartão',
-          installments,
-          // allow client to provide payment_method_id (card brand) if known
-          payment_method_id: body.payment_method_id || body.card_brand || 'visa',
-          payer: {
-            email: payer?.email || 'no-reply@example.com',
-            first_name: payer?.first_name || payer?.name || ''
+      // if client explicitly chose debit mode, hint to MercadoPago
+      if (body.card_mode === 'debit') createBody.payment_type_id = 'debit_card'
+
+      const payment = await paymentClient.create({ body: createBody })
+
+      // If payment is not immediately approved, poll for a short time to catch quick confirmations
+      const status = payment?.status || payment?.body?.status || null
+      if (status && (status === 'approved' || status === 'paid')) {
+        return NextResponse.json(payment)
+      }
+
+      // Polling loop (up to ~10s total)
+      const paymentId = payment?.id || payment?.body?.id || payment?.body?.payment?.id
+      if (paymentId) {
+        const maxAttempts = 5
+        const delayMs = 2000
+        for (let i = 0; i < maxAttempts; i++) {
+          await new Promise((r) => setTimeout(r, delayMs))
+          try {
+            const check = await paymentClient.get({ id: paymentId })
+            const checkStatus = check?.status || check?.body?.status || null
+            if (checkStatus && (checkStatus === 'approved' || checkStatus === 'paid')) {
+              return NextResponse.json(check)
+            }
+          } catch (e) {
+            // ignore transient polling errors
           }
         }
-      })
+      }
 
+      // return initial payment object if still pending
       return NextResponse.json(payment)
     }
 
