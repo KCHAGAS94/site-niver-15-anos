@@ -186,15 +186,32 @@ export default function CheckoutPage() {
       if (!token) throw new Error("Falha ao tokenizar cartão")
 
       // try to infer card brand from token response when available
-      let cardBrand = tokenResp?.card?.brand || tokenResp?.card?.network || tokenResp?.cardholder?.brand || tokenResp?.payment_method_id || null
+      let cardBrand = tokenResp?.payment_method_id || tokenResp?.card?.brand || tokenResp?.card?.network || tokenResp?.cardholder?.brand || null
+      let issuerId = tokenResp?.issuer_id || null
       
       // If still no brand, try to identify from card number BIN using SDK
-      if (!cardBrand) {
+      if (!cardBrand || !issuerId) {
         try {
           const bin = cardNumber.replace(/\s+/g, "").substring(0, 6)
           const pmResp = await mp.getPaymentMethods({ bin })
-          if (pmResp?.results?.[0]?.id) {
-            cardBrand = pmResp.results[0].id
+          if (pmResp?.results?.[0]) {
+            cardBrand = cardBrand || pmResp.results[0].id
+            
+            // For debit cards, try to get issuer from the BIN query
+            if (!issuerId && method === 'debit') {
+              try {
+                const installmentsResp = await mp.getInstallments({
+                  amount: amount,
+                  bin: bin,
+                  paymentTypeId: 'debit_card'
+                })
+                if (installmentsResp?.[0]?.issuer?.id) {
+                  issuerId = installmentsResp[0].issuer.id
+                }
+              } catch (e) {
+                console.warn("Failed to get issuer:", e)
+              }
+            }
           }
         } catch (e) {
           console.warn("Failed to detect payment method from BIN:", e)
@@ -212,6 +229,8 @@ export default function CheckoutPage() {
         else cardBrand = 'visa' // default fallback
       }
 
+      console.log('Payment details:', { cardBrand, issuerId, method, installments })
+
       const res = await fetch("/api/payment", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -223,12 +242,18 @@ export default function CheckoutPage() {
           payer: { email, first_name: name },
           // communicate to server whether user chose debit or credit
           card_mode: method,
-          // optionally provide detected brand
-          payment_method_id: cardBrand
+          // provide detected brand and issuer
+          payment_method_id: cardBrand,
+          issuer_id: issuerId,
+          description: 'Presente'
         })
       })
       const data = await res.json()
-      if (!res.ok) throw new Error(data?.error || "Erro ao processar cartão")
+      if (!res.ok) {
+        const errorMsg = data?.error || "Erro ao processar cartão"
+        console.error('Payment error:', data)
+        throw new Error(errorMsg)
+      }
       setMessage("Pagamento criado: " + (data.status || JSON.stringify(data)))
     } catch (err: any) {
       setMessage(err?.message ?? String(err))

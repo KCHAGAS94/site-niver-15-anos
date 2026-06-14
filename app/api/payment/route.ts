@@ -57,38 +57,58 @@ export async function POST(req: Request) {
         }
       }
 
-      // if client explicitly chose debit mode, hint to MercadoPago
-      if (body.card_mode === 'debit') createBody.payment_type_id = 'debit_card'
-
-      const payment = await paymentClient.create({ body: createBody })
-
-      // If payment is not immediately approved, poll for a short time to catch quick confirmations
-      const status = payment?.status || payment?.body?.status || null
-      if (status && (status === 'approved' || status === 'paid')) {
-        return NextResponse.json(payment)
+      // Add issuer_id if provided (required for debit cards and some credit cards)
+      if (body.issuer_id) {
+        createBody.issuer_id = Number(body.issuer_id)
       }
 
-      // Polling loop (up to ~10s total)
-      const paymentId = payment?.id || payment?.body?.id || payment?.body?.payment?.id
-      if (paymentId) {
-        const maxAttempts = 5
-        const delayMs = 2000
-        for (let i = 0; i < maxAttempts; i++) {
-          await new Promise((r) => setTimeout(r, delayMs))
-          try {
-            const check = await paymentClient.get({ id: paymentId })
-            const checkStatus = check?.status || check?.body?.status || null
-            if (checkStatus && (checkStatus === 'approved' || checkStatus === 'paid')) {
-              return NextResponse.json(check)
+      // if client explicitly chose debit mode, hint to MercadoPago
+      if (body.card_mode === 'debit') {
+        createBody.payment_type_id = 'debit_card'
+      }
+
+      console.log('Creating payment with body:', JSON.stringify(createBody, null, 2))
+
+      try {
+        const payment = await paymentClient.create({ body: createBody })
+
+        // If payment is not immediately approved, poll for a short time to catch quick confirmations
+        const status = payment?.status || payment?.body?.status || null
+        if (status && (status === 'approved' || status === 'paid')) {
+          return NextResponse.json(payment)
+        }
+
+        // Polling loop (up to ~10s total)
+        const paymentId = payment?.id || payment?.body?.id || payment?.body?.payment?.id
+        if (paymentId) {
+          const maxAttempts = 5
+          const delayMs = 2000
+          for (let i = 0; i < maxAttempts; i++) {
+            await new Promise((r) => setTimeout(r, delayMs))
+            try {
+              const check = await paymentClient.get({ id: paymentId })
+              const checkStatus = check?.status || check?.body?.status || null
+              if (checkStatus && (checkStatus === 'approved' || checkStatus === 'paid')) {
+                return NextResponse.json(check)
+              }
+            } catch (e) {
+              // ignore transient polling errors
             }
-          } catch (e) {
-            // ignore transient polling errors
           }
         }
-      }
 
-      // return initial payment object if still pending
-      return NextResponse.json(payment)
+        // return initial payment object if still pending
+        return NextResponse.json(payment)
+      } catch (paymentError: any) {
+        // Extract detailed error message from MercadoPago response
+        console.error('MercadoPago error:', JSON.stringify(paymentError, null, 2))
+        const errorMsg = paymentError?.cause?.[0]?.description || paymentError?.message || 'Erro ao processar pagamento'
+        return NextResponse.json({ 
+          error: errorMsg, 
+          code: paymentError?.cause?.[0]?.code,
+          details: paymentError?.cause 
+        }, { status: 400 })
+      }
     }
 
     return NextResponse.json({ error: 'unsupported payment_method' }, { status: 400 })
