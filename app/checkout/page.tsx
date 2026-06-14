@@ -222,8 +222,6 @@ export default function CheckoutPage() {
       }
       
       // Passo 2: Tentar detectar via API do MercadoPago (mais preciso)
-      let issuersList = []
-      
       try {
         const pmResp = await mp.getPaymentMethods({ bin })
         console.log('Payment Methods Response:', pmResp)
