@@ -1,8 +1,9 @@
 "use client"
-import React, { useEffect, useState, useRef } from "react"
+import { useEffect, useState, useRef } from "react"
 import { Navigation } from "@/components/navigation"
+import type { CSSProperties } from "react"
 
-export default function CheckoutPage(): JSX.Element {
+export default function CheckoutPage() {
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
   const [amount, setAmount] = useState("0.00")
@@ -185,7 +186,31 @@ export default function CheckoutPage(): JSX.Element {
       if (!token) throw new Error("Falha ao tokenizar cartão")
 
       // try to infer card brand from token response when available
-      const cardBrand = tokenResp?.card?.brand || tokenResp?.card?.network || tokenResp?.cardholder?.brand || null
+      let cardBrand = tokenResp?.card?.brand || tokenResp?.card?.network || tokenResp?.cardholder?.brand || tokenResp?.payment_method_id || null
+      
+      // If still no brand, try to identify from card number BIN using SDK
+      if (!cardBrand) {
+        try {
+          const bin = cardNumber.replace(/\s+/g, "").substring(0, 6)
+          const pmResp = await mp.getPaymentMethods({ bin })
+          if (pmResp?.results?.[0]?.id) {
+            cardBrand = pmResp.results[0].id
+          }
+        } catch (e) {
+          console.warn("Failed to detect payment method from BIN:", e)
+        }
+      }
+      
+      // Fallback: identify by first digits
+      if (!cardBrand) {
+        const firstDigit = cardNumber.replace(/\s+/g, "")[0]
+        const binPrefix = cardNumber.replace(/\s+/g, "").substring(0, 2)
+        if (firstDigit === '4') cardBrand = 'visa'
+        else if (firstDigit === '5' || (binPrefix >= '51' && binPrefix <= '55')) cardBrand = 'master'
+        else if (firstDigit === '3') cardBrand = 'amex'
+        else if (firstDigit === '6') cardBrand = 'elo'
+        else cardBrand = 'visa' // default fallback
+      }
 
       const res = await fetch("/api/payment", {
         method: "POST",
@@ -199,7 +224,7 @@ export default function CheckoutPage(): JSX.Element {
           // communicate to server whether user chose debit or credit
           card_mode: method,
           // optionally provide detected brand
-          card_brand: cardBrand
+          payment_method_id: cardBrand
         })
       })
       const data = await res.json()
@@ -389,7 +414,7 @@ export default function CheckoutPage(): JSX.Element {
 }
 
 // Helper style functions
-function inputStyle(hasError = false): React.CSSProperties {
+function inputStyle(hasError = false): CSSProperties {
   return {
     padding: "10px 14px",
     borderRadius: 8,
@@ -401,7 +426,7 @@ function inputStyle(hasError = false): React.CSSProperties {
   }
 }
 
-function primaryButtonStyle(): React.CSSProperties {
+function primaryButtonStyle(): CSSProperties {
   return {
     padding: "12px 24px",
     borderRadius: 8,
@@ -414,7 +439,7 @@ function primaryButtonStyle(): React.CSSProperties {
   }
 }
 
-function secondaryButtonStyle(): React.CSSProperties {
+function secondaryButtonStyle(): CSSProperties {
   return {
     padding: "12px 24px",
     borderRadius: 8,
@@ -427,7 +452,7 @@ function secondaryButtonStyle(): React.CSSProperties {
   }
 }
 
-function statusTrackStyle(): React.CSSProperties {
+function statusTrackStyle(): CSSProperties {
   return {
     width: '100%',
     height: 8,
@@ -437,7 +462,7 @@ function statusTrackStyle(): React.CSSProperties {
   }
 }
 
-function statusFillStyle(progress: number, status: string | null): React.CSSProperties {
+function statusFillStyle(progress: number, status: string | null): CSSProperties {
   return {
     height: '100%',
     width: `${progress}%`,
@@ -446,7 +471,7 @@ function statusFillStyle(progress: number, status: string | null): React.CSSProp
   }
 }
 
-function getMessageStyle(message: string, hasValidationErrors: boolean): React.CSSProperties {
+function getMessageStyle(message: string, hasValidationErrors: boolean): CSSProperties {
   const isSuccess = message.includes('aprovada') || message.includes('confirmado')
   return {
     marginTop: 18,

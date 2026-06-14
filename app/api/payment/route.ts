@@ -41,12 +41,16 @@ export async function POST(req: Request) {
 
       // for debit payments force 1 installment
       const installments = payment_method === 'debit' ? 1 : (body.installments || 1)
+      
+      // Determine payment_method_id - try multiple sources, fallback to visa
+      let paymentMethodId = body.payment_method_id || body.card_brand || 'visa'
+      
       const createBody: any = {
         transaction_amount: Number(amount),
         token,
         description: body.description || 'Pagamento com cartão',
         installments,
-        payment_method_id: body.payment_method_id || body.card_brand || 'visa',
+        payment_method_id: paymentMethodId,
         payer: {
           email: payer?.email || 'no-reply@example.com',
           first_name: payer?.first_name || payer?.name || ''
