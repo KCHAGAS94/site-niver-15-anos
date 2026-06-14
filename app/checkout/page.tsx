@@ -16,6 +16,33 @@ export default function CheckoutPage() {
   const [cardCvv, setCardCvv] = useState("")
   const [cardholderDocument, setCardholderDocument] = useState("")
   const [installments, setInstallments] = useState<number>(1)
+  const [detectedCardBrand, setDetectedCardBrand] = useState<string | null>(null)
+
+  // Detectar bandeira do cartão enquanto usuário digita
+  useEffect(() => {
+    const cleanNumber = cardNumber.replace(/\s+/g, "")
+    if (cleanNumber.length < 1) {
+      setDetectedCardBrand(null)
+      return
+    }
+    
+    const firstDigit = cleanNumber[0]
+    const binPrefix = cleanNumber.substring(0, 2)
+    
+    if (firstDigit === '4') {
+      setDetectedCardBrand('Visa')
+    } else if (firstDigit === '5' && (binPrefix >= '51' && binPrefix <= '55')) {
+      setDetectedCardBrand('Mastercard')
+    } else if (binPrefix === '34' || binPrefix === '37') {
+      setDetectedCardBrand('American Express')
+    } else if (firstDigit === '6') {
+      setDetectedCardBrand('Elo')
+    } else if (binPrefix >= '36' && binPrefix <= '39') {
+      setDetectedCardBrand('Diners')
+    } else {
+      setDetectedCardBrand('Detectando...')
+    }
+  }, [cardNumber])
 
   const [qr, setQr] = useState<string | null>(null)
   const [message, setMessage] = useState<string | null>(null)
@@ -174,8 +201,27 @@ export default function CheckoutPage() {
       const mp = new MercadoPago(publicKey)
       const bin = cardNumber.replace(/\s+/g, "").substring(0, 6)
       
-      // Passo 1: Identificar o método de pagamento (bandeira do cartão)
+      // Passo 1: Tentar identificar a bandeira do cartão por padrões conhecidos primeiro
       let paymentMethodId = null
+      const firstDigit = cardNumber.replace(/\s+/g, "")[0]
+      const binPrefix = cardNumber.replace(/\s+/g, "").substring(0, 2)
+      
+      // Detecção por padrão de número (fallback inicial)
+      if (firstDigit === '4') {
+        paymentMethodId = 'visa'
+      } else if (firstDigit === '5' && (binPrefix >= '51' && binPrefix <= '55')) {
+        paymentMethodId = 'master'
+      } else if (binPrefix === '34' || binPrefix === '37') {
+        paymentMethodId = 'amex'
+      } else if (firstDigit === '6') {
+        paymentMethodId = 'elo'
+      } else if (binPrefix >= '36' && binPrefix <= '39') {
+        paymentMethodId = 'diners'
+      } else if (binPrefix >= '60' && binPrefix <= '65') {
+        paymentMethodId = 'cabal'
+      }
+      
+      // Passo 2: Tentar detectar via API do MercadoPago (mais preciso)
       let issuersList = []
       
       try {
@@ -183,28 +229,30 @@ export default function CheckoutPage() {
         console.log('Payment Methods Response:', pmResp)
         
         if (pmResp?.results?.[0]) {
-          paymentMethodId = pmResp.results[0].id
-          console.log('Detected payment_method_id:', paymentMethodId)
+          paymentMethodId = pmResp.results[0].id // Sobrescreve o fallback se conseguir detectar
+          console.log('Detected payment_method_id from API:', paymentMethodId)
         }
       } catch (e) {
-        console.error("Failed to detect payment method:", e)
-        throw new Error("Não foi possível identificar a bandeira do cartão. Verifique o número digitado.")
+        console.warn("Failed to detect payment method from API, using fallback:", e)
       }
       
       if (!paymentMethodId) {
-        throw new Error("Não foi possível identificar a bandeira do cartão")
+        throw new Error("Não foi possível identificar a bandeira do cartão. Verifique se o número está correto.")
       }
       
-      // Passo 2: Obter lista de issuers (bancos emissores) para este método de pagamento
+      console.log('Using payment_method_id:', paymentMethodId)
+      console.log('Using payment_method_id:', paymentMethodId)
+      
+      // Passo 3: Obter lista de issuers (bancos emissores) para este método de pagamento
       try {
         const issuersResp = await mp.getIssuers({ paymentMethodId, bin })
         console.log('Issuers Response:', issuersResp)
         issuersList = issuersResp || []
       } catch (e) {
-        console.error("Failed to get issuers:", e)
+        console.warn("Failed to get issuers, will try without it:", e)
       }
       
-      // Passo 3: Obter o issuer_id correto usando getInstallments
+      // Passo 4: Obter o issuer_id correto usando getInstallments
       let issuerId = null
       
       try {
@@ -220,7 +268,7 @@ export default function CheckoutPage() {
           console.log('Detected issuer_id:', issuerId)
         }
       } catch (e) {
-        console.error("Failed to get installments:", e)
+        console.warn("Failed to get installments, will try without issuer:", e)
       }
       
       // Fallback: usar o primeiro issuer da lista se não conseguiu detectar
@@ -229,7 +277,12 @@ export default function CheckoutPage() {
         console.log('Using first issuer from list:', issuerId)
       }
       
-      // Passo 4: Tokenizar o cartão
+      // Para cartão de débito, mostrar aviso se não detectou issuer
+      if (method === 'debit' && !issuerId) {
+        console.warn('Debit card without issuer_id - payment may fail')
+      }
+      
+      // Passo 5: Tokenizar o cartão
       const cardData = {
         cardNumber: cardNumber.replace(/\s+/g, ""),
         expirationMonth: cardMonth,
@@ -409,7 +462,14 @@ export default function CheckoutPage() {
               <div style={{ marginTop: 16 }}>
                 <div style={{ display: "grid", gap: 12 }}>
                   <div>
-                    <label style={{ fontSize: 12, color: "var(--color-muted-foreground)" }}>Número do cartão</label>
+                    <label style={{ fontSize: 12, color: "var(--color-muted-foreground)" }}>
+                      Número do cartão
+                      {detectedCardBrand && (
+                        <span style={{ marginLeft: 8, fontWeight: 600, color: 'var(--color-primary)' }}>
+                          • {detectedCardBrand}
+                        </span>
+                      )}
+                    </label>
                     <input 
                       value={cardNumber} 
                       onChange={(e) => setCardNumber(e.target.value)} 
@@ -492,6 +552,15 @@ export default function CheckoutPage() {
                       🔒 <strong>Pagamento 100% seguro</strong> - Os dados do seu cartão são processados diretamente pelo Mercado Pago, sem passar pelos nossos servidores.
                     </p>
                   </div>
+                  
+                  {process.env.NODE_ENV === 'development' && (
+                    <div style={{ marginTop: 8, padding: '10px 14px', background: 'rgba(251, 191, 36, 0.1)', borderRadius: 8, border: '1px solid rgba(251, 191, 36, 0.3)', fontSize: 11 }}>
+                      <strong>💳 Cartões de teste:</strong><br/>
+                      • Visa: 4509 9535 6623 3704<br/>
+                      • Master: 5031 4332 1540 6351<br/>
+                      • Use qualquer CVV (ex: 123) e data futura
+                    </div>
+                  )}
                 </div>
               </div>
             )}

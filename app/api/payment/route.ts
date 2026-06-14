@@ -72,6 +72,9 @@ export async function POST(req: Request) {
       // Add issuer_id if provided (importante para débito)
       if (body.issuer_id) {
         createBody.issuer_id = Number(body.issuer_id)
+        console.log('Using issuer_id:', createBody.issuer_id)
+      } else {
+        console.warn('No issuer_id provided - may cause issues with debit cards')
       }
 
       // Set payment type based on card mode
