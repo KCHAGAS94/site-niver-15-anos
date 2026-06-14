@@ -57,7 +57,7 @@ export async function POST(req: Request) {
         }
       }
 
-      // Add issuer_id if provided (required for debit cards and some credit cards)
+      // Only add issuer_id if provided (not required for all card types)
       if (body.issuer_id) {
         createBody.issuer_id = Number(body.issuer_id)
       }
@@ -65,12 +65,16 @@ export async function POST(req: Request) {
       // if client explicitly chose debit mode, hint to MercadoPago
       if (body.card_mode === 'debit') {
         createBody.payment_type_id = 'debit_card'
+      } else if (body.card_mode === 'credit') {
+        createBody.payment_type_id = 'credit_card'
       }
 
       console.log('Creating payment with body:', JSON.stringify(createBody, null, 2))
 
       try {
         const payment = await paymentClient.create({ body: createBody })
+
+        console.log('Payment created:', JSON.stringify(payment, null, 2))
 
         // If payment is not immediately approved, poll for a short time to catch quick confirmations
         const status = payment?.status || payment?.body?.status || null
@@ -102,11 +106,33 @@ export async function POST(req: Request) {
       } catch (paymentError: any) {
         // Extract detailed error message from MercadoPago response
         console.error('MercadoPago error:', JSON.stringify(paymentError, null, 2))
-        const errorMsg = paymentError?.cause?.[0]?.description || paymentError?.message || 'Erro ao processar pagamento'
+        
+        const errorCode = paymentError?.cause?.[0]?.code
+        const errorDescription = paymentError?.cause?.[0]?.description
+        
+        let userMessage = errorDescription || paymentError?.message || 'Erro ao processar pagamento'
+        
+        // Translate common error codes to Portuguese
+        if (errorCode === '316' || errorDescription?.includes('not_result_by_params')) {
+          userMessage = 'Não foi possível processar este cartão. Por favor, verifique os dados ou use o Checkout Pro.'
+        } else if (errorCode === '205') {
+          userMessage = 'Número do cartão inválido'
+        } else if (errorCode === '208' || errorCode === 'E301') {
+          userMessage = 'Mês de expiração inválido'
+        } else if (errorCode === '209' || errorCode === 'E302') {
+          userMessage = 'Ano de expiração inválido'
+        } else if (errorCode === '212' || errorCode === '213' || errorCode === '214') {
+          userMessage = 'Documento inválido'
+        } else if (errorCode === '221' || errorCode === 'E203') {
+          userMessage = 'Nome do titular inválido'
+        } else if (errorCode === '224' || errorCode === 'E302') {
+          userMessage = 'Código de segurança inválido'
+        }
+        
         return NextResponse.json({ 
-          error: errorMsg, 
-          code: paymentError?.cause?.[0]?.code,
-          details: paymentError?.cause 
+          error: userMessage, 
+          code: errorCode,
+          technical_details: errorDescription
         }, { status: 400 })
       }
     }

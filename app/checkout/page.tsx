@@ -190,28 +190,12 @@ export default function CheckoutPage() {
       let issuerId = tokenResp?.issuer_id || null
       
       // If still no brand, try to identify from card number BIN using SDK
-      if (!cardBrand || !issuerId) {
+      if (!cardBrand) {
         try {
           const bin = cardNumber.replace(/\s+/g, "").substring(0, 6)
           const pmResp = await mp.getPaymentMethods({ bin })
           if (pmResp?.results?.[0]) {
             cardBrand = cardBrand || pmResp.results[0].id
-            
-            // For debit cards, try to get issuer from the BIN query
-            if (!issuerId && method === 'debit') {
-              try {
-                const installmentsResp = await mp.getInstallments({
-                  amount: amount,
-                  bin: bin,
-                  paymentTypeId: 'debit_card'
-                })
-                if (installmentsResp?.[0]?.issuer?.id) {
-                  issuerId = installmentsResp[0].issuer.id
-                }
-              } catch (e) {
-                console.warn("Failed to get issuer:", e)
-              }
-            }
           }
         } catch (e) {
           console.warn("Failed to detect payment method from BIN:", e)
@@ -231,30 +215,55 @@ export default function CheckoutPage() {
 
       console.log('Payment details:', { cardBrand, issuerId, method, installments })
 
+      const paymentBody: any = {
+        amount,
+        payment_method: "card",
+        token,
+        installments: method === "credit" ? installments : 1,
+        payer: { email, first_name: name },
+        card_mode: method,
+        payment_method_id: cardBrand,
+        description: 'Presente'
+      }
+
+      // Only include issuer_id if we have it
+      if (issuerId) {
+        paymentBody.issuer_id = issuerId
+      }
+
       const res = await fetch("/api/payment", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          amount,
-          payment_method: "card",
-          token,
-          installments: method === "credit" ? installments : 1,
-          payer: { email, first_name: name },
-          // communicate to server whether user chose debit or credit
-          card_mode: method,
-          // provide detected brand and issuer
-          payment_method_id: cardBrand,
-          issuer_id: issuerId,
-          description: 'Presente'
-        })
+        body: JSON.stringify(paymentBody)
       })
       const data = await res.json()
       if (!res.ok) {
         const errorMsg = data?.error || "Erro ao processar cartão"
         console.error('Payment error:', data)
+        
+        // Se for erro de parâmetros, sugere usar Checkout Pro
+        if (data?.code === '316' || errorMsg.includes('not_result_by_params') || errorMsg.includes('No result found')) {
+          throw new Error('Não foi possível processar este cartão com os dados fornecidos. Por favor, use o botão "Checkout Pro" para uma experiência de pagamento mais completa.')
+        }
+        
         throw new Error(errorMsg)
       }
-      setMessage("Pagamento criado: " + (data.status || JSON.stringify(data)))
+      
+      const paymentStatus = data?.status || data?.body?.status
+      const statusMessage = paymentStatus === 'approved' ? 'Pagamento aprovado!' : 
+                           paymentStatus === 'pending' ? 'Pagamento pendente de confirmação' :
+                           paymentStatus === 'in_process' ? 'Pagamento em processamento' :
+                           'Pagamento criado: ' + paymentStatus
+      
+      setMessage(statusMessage)
+      
+      // Se aprovado, limpar formulário
+      if (paymentStatus === 'approved') {
+        setCardNumber("")
+        setCardMonth("")
+        setCardYear("")
+        setCardCvv("")
+      }
     } catch (err: any) {
       setMessage(err?.message ?? String(err))
     } finally {
@@ -379,6 +388,14 @@ export default function CheckoutPage() {
                       <button type="button" onClick={startCheckoutPro} disabled={loading} style={{ ...primaryButtonStyle(), background: '#0ea5a4' }}>Checkout Pro</button>
                     )}
                   </div>
+                  
+                  {method === 'debit' && (
+                    <div style={{ marginTop: 12, padding: '12px 16px', background: 'rgba(14, 165, 164, 0.1)', borderRadius: 8, border: '1px solid rgba(14, 165, 164, 0.3)' }}>
+                      <p style={{ fontSize: 13, color: 'var(--color-foreground)', margin: 0 }}>
+                        💡 <strong>Dica:</strong> Se o pagamento direto não funcionar, use o botão <strong>"Checkout Pro"</strong> para uma experiência de pagamento completa e segura do Mercado Pago.
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
