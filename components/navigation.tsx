@@ -1,19 +1,22 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { usePathname } from "next/navigation"
 import { Menu, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 const navItems = [
-  { href: "#inicio", label: "Início" },
-  { href: "#sobre", label: "Sobre" },
-  { href: "#galeria", label: "Galeria" },
-  { href: "#presentes", label: "Presentes" },
+  { href: "#inicio", label: "INÍCIO" },
+  { href: "#sobre", label: "SOBRE" },
+  { href: "#galeria", label: "GALERIA" },
+  { href: "#presentes", label: "PRESENTES" },
 ]
 
 export function Navigation() {
   const [isScrolled, setIsScrolled] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const pathname = usePathname()
+  const isHomePage = pathname === "/"
 
   useEffect(() => {
     const handleScroll = () => {
@@ -23,11 +26,14 @@ export function Navigation() {
     return () => window.removeEventListener("scroll", handleScroll)
   }, [])
 
+  // Se não estiver na home, sempre mostrar header com fundo
+  const showSolidHeader = !isHomePage || isScrolled
+
   return (
     <header
       className={cn(
         "fixed left-0 right-0 top-0 z-50 transition-all duration-300",
-        isScrolled
+        showSolidHeader
           ? "bg-background/95 shadow-lg backdrop-blur-md"
           : "bg-transparent"
       )}
@@ -35,10 +41,10 @@ export function Navigation() {
       <nav className="container mx-auto flex items-center justify-between px-4 py-4">
         {/* Logo */}
         <a
-          href="#inicio"
+          href={isHomePage ? "#inicio" : "/"}
           className={cn(
             "font-serif text-2xl transition-colors",
-            isScrolled ? "text-primary" : "text-white"
+            showSolidHeader ? "text-primary" : "text-white"
           )}
         >
           Vitória
@@ -49,10 +55,10 @@ export function Navigation() {
           {navItems.map((item) => (
             <li key={item.href}>
               <a
-                href={item.href}
+                href={isHomePage ? item.href : `/${item.href}`}
                 className={cn(
                   "text-sm font-medium uppercase tracking-wider transition-colors hover:text-primary",
-                  isScrolled ? "text-foreground" : "text-white"
+                  showSolidHeader ? "text-foreground" : "text-white"
                 )}
               >
                 {item.label}
@@ -66,7 +72,7 @@ export function Navigation() {
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           className={cn(
             "md:hidden",
-            isScrolled ? "text-foreground" : "text-white"
+            showSolidHeader ? "text-foreground" : "text-white"
           )}
           aria-label={isMobileMenuOpen ? "Fechar menu" : "Abrir menu"}
         >
@@ -91,7 +97,7 @@ export function Navigation() {
           {navItems.map((item) => (
             <li key={item.href}>
               <a
-                href={item.href}
+                href={isHomePage ? item.href : `/${item.href}`}
                 onClick={() => setIsMobileMenuOpen(false)}
                 className="block py-3 text-center text-sm font-medium uppercase tracking-wider text-foreground transition-colors hover:text-primary"
               >

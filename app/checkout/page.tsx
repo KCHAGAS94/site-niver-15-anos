@@ -1,5 +1,6 @@
 "use client"
 import React, { useEffect, useState, useRef } from "react"
+import { Navigation } from "@/components/navigation"
 
 export default function CheckoutPage(): JSX.Element {
   const [name, setName] = useState("")
@@ -240,9 +241,11 @@ export default function CheckoutPage(): JSX.Element {
   }
 
   return (
-    <div style={{ display: "flex", justifyContent: "center", padding: 36 }}>
-      <div style={{ width: "100%", maxWidth: 820 }}>
-        <h2 style={{ textAlign: "center", color: "var(--color-primary)", marginBottom: 18 }}>Finalizar Presente</h2>
+    <>
+      <Navigation />
+      <div style={{ display: "flex", justifyContent: "center", padding: 36, paddingTop: 120 }}>
+        <div style={{ width: "100%", maxWidth: 820 }}>
+          <h2 style={{ textAlign: "center", color: "var(--color-primary)", marginBottom: 18 }}>Finalizar Presente</h2>
 
         <div style={{ background: "var(--color-card)", padding: 24, borderRadius: 12, boxShadow: "0 6px 18px rgba(0,0,0,0.06)" }}>
           <form onSubmit={payCard}>
@@ -379,71 +382,79 @@ export default function CheckoutPage(): JSX.Element {
             </div>
           )}
         </div>
+        </div>
       </div>
-    </div>
+    </>
   )
 }
 
-function inputStyle(error?: boolean): React.CSSProperties {
+// Helper style functions
+function inputStyle(hasError = false): React.CSSProperties {
   return {
-    width: "100%",
-    padding: "10px 12px",
+    padding: "10px 14px",
     borderRadius: 8,
-    border: error ? '1px solid #e11d48' : "1px solid var(--color-border)",
-    background: "var(--color-input)"
+    border: hasError ? "2px solid #e11d48" : "1px solid var(--color-border)",
+    background: "var(--color-background)",
+    color: "var(--color-foreground)",
+    width: "100%",
+    fontSize: 14
   }
 }
 
 function primaryButtonStyle(): React.CSSProperties {
   return {
-    background: "var(--color-primary)",
-    color: "var(--color-primary-foreground)",
-    border: "none",
-    padding: "10px 18px",
+    padding: "12px 24px",
     borderRadius: 8,
-    cursor: "pointer"
+    border: "none",
+    background: "var(--color-primary)",
+    color: "white",
+    fontWeight: 600,
+    cursor: "pointer",
+    fontSize: 14
   }
 }
 
 function secondaryButtonStyle(): React.CSSProperties {
   return {
-    background: "transparent",
-    color: "var(--color-foreground)",
-    border: "1px solid var(--color-border)",
-    padding: "10px 18px",
+    padding: "12px 24px",
     borderRadius: 8,
-    cursor: "pointer"
+    border: "1px solid var(--color-border)",
+    background: "var(--color-card)",
+    color: "var(--color-foreground)",
+    fontWeight: 600,
+    cursor: "pointer",
+    fontSize: 14
   }
 }
 
 function statusTrackStyle(): React.CSSProperties {
   return {
     width: '100%',
-    height: 12,
-    background: 'var(--color-border)',
-    borderRadius: 8,
+    height: 8,
+    background: 'var(--color-muted)',
+    borderRadius: 4,
     overflow: 'hidden'
   }
 }
 
 function statusFillStyle(progress: number, status: string | null): React.CSSProperties {
-  const bg = status && (status === 'approved' || status === 'paid') ? 'var(--color-success)' : 'var(--color-primary)'
   return {
-    width: `${progress}%`,
     height: '100%',
-    background: bg,
-    transition: 'width 600ms ease',
-    borderRadius: 8
+    width: `${progress}%`,
+    background: status && (status === 'approved' || status === 'paid') ? 'var(--color-success)' : 'var(--color-primary)',
+    transition: 'width 0.5s ease'
   }
 }
 
-function getMessageStyle(isMessage: string | null, isError: boolean): React.CSSProperties {
+function getMessageStyle(message: string, hasValidationErrors: boolean): React.CSSProperties {
+  const isSuccess = message.includes('aprovada') || message.includes('confirmado')
   return {
-    marginTop: 12,
-    padding: '12px 14px',
+    marginTop: 18,
+    padding: 14,
     borderRadius: 8,
-    background: isError ? 'rgba(225,29,72,0.06)' : 'var(--color-card)',
-    color: isError ? '#9f1239' : 'var(--color-foreground)',
-    border: isError ? '1px solid rgba(225,29,72,0.12)' : 'none'
+    background: hasValidationErrors ? '#fee2e2' : isSuccess ? '#d1fae5' : '#fef3c7',
+    color: hasValidationErrors ? '#991b1b' : isSuccess ? '#065f46' : '#78350f',
+    fontSize: 14,
+    border: hasValidationErrors ? '1px solid #fca5a5' : isSuccess ? '1px solid #6ee7b7' : '1px solid #fcd34d'
   }
 }
