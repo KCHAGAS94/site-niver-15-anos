@@ -256,13 +256,25 @@ export default function CheckoutPage() {
         const detectJson = await detectResp.json()
         console.log('✅ Server issuer detection response:', detectJson)
 
-        if (detectJson?.issuers) {
-          issuersList = Array.isArray(detectJson.issuers) ? detectJson.issuers : detectJson.issuers
+        // Normaliza a resposta: o endpoint server-side retorna { ok,status,body }
+        const getBody = (obj: any) => (obj && typeof obj === 'object' && 'body' in obj) ? obj.body : obj
+
+        const issuersBody = getBody(detectJson?.issuers)
+        if (issuersBody) {
+          if (Array.isArray(issuersBody)) issuersList = issuersBody
+          else if (Array.isArray(issuersBody?.results)) issuersList = issuersBody.results
+          else issuersList = issuersBody
         }
 
-        if (detectJson?.installments && Array.isArray(detectJson.installments) && detectJson.installments[0]?.issuer?.id) {
-          issuerId = detectJson.installments[0].issuer.id
+        const installmentsBody = getBody(detectJson?.installments)
+        if (Array.isArray(installmentsBody) && installmentsBody[0]?.issuer?.id) {
+          issuerId = installmentsBody[0].issuer.id
           console.log('✅ Detected issuer_id from server installments:', issuerId)
+        } else if (Array.isArray(installmentsBody?.body) && installmentsBody.body[0]?.issuer?.id) {
+          issuerId = installmentsBody.body[0].issuer.id
+          console.log('✅ Detected issuer_id nested from server installments:', issuerId)
+        } else {
+          console.log('⚠️ No issuer_id found in server installments body')
         }
       } catch (e) {
         console.error('❌ Server issuer detection failed:', e)
