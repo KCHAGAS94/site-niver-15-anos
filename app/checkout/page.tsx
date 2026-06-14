@@ -297,7 +297,7 @@ export default function CheckoutPage() {
             {(method === "debit" || method === "credit") && (
               <div style={{ marginTop: 16 }}>
                 <div style={{ marginBottom: 12, fontSize: 13, color: "var(--color-muted-foreground)" }}>
-                  O formulário abaixo é automático e o Mercado Pago busca emissor e parcelas sozinho.
+                  O formulário abaixo é automático. No crédito, o Mercado Pago vai mostrar as parcelas para o usuário escolher, de 1x até 3x.
                 </div>
 
                 <CardPayment
