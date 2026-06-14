@@ -244,40 +244,49 @@ export default function CheckoutPage() {
       // Passo 3: Obter lista de issuers (bancos emissores) para este método de pagamento
       let issuersList = []
       
+      console.log('🔍 Step 3: Getting issuers for', paymentMethodId, 'with BIN', bin)
       try {
         const issuersResp = await mp.getIssuers({ paymentMethodId, bin })
-        console.log('Issuers Response:', issuersResp)
+        console.log('✅ Issuers Response:', issuersResp)
         issuersList = issuersResp || []
       } catch (e) {
-        console.warn("Failed to get issuers, will try without it:", e)
+        console.error("❌ Failed to get issuers:", e)
       }
       
       // Passo 4: Obter o issuer_id correto usando getInstallments
       let issuerId = null
       
+      console.log('🔍 Step 4: Getting installments with amount:', amount, 'bin:', bin, 'paymentTypeId:', method === 'debit' ? 'debit_card' : 'credit_card')
       try {
         const installmentsResp = await mp.getInstallments({
           amount: String(amount),
           bin: bin,
           paymentTypeId: method === 'debit' ? 'debit_card' : 'credit_card'
         })
-        console.log('Installments Response:', installmentsResp)
+        console.log('✅ Installments Response:', installmentsResp)
         
         if (installmentsResp?.[0]?.issuer?.id) {
           issuerId = installmentsResp[0].issuer.id
-          console.log('Detected issuer_id from installments:', issuerId)
+          console.log('✅ Detected issuer_id from installments:', issuerId)
+        } else {
+          console.warn('⚠️ No issuer found in installments response')
         }
       } catch (e) {
-        console.warn("Failed to get installments:", e)
+        console.error("❌ Failed to get installments:", e)
       }
       
       // Fallback: usar o primeiro issuer da lista se não conseguiu detectar
       if (!issuerId && issuersList.length > 0) {
         issuerId = issuersList[0].id
-        console.log('Using first issuer from list:', issuerId)
+        console.log('✅ Using first issuer from list:', issuerId)
       }
       
-      console.log('Final issuer_id:', issuerId, 'for payment method:', paymentMethodId, 'type:', method)
+      console.log('🎯 Final issuer_id:', issuerId, 'for payment method:', paymentMethodId, 'type:', method)
+      
+      // Validação: débito REQUER issuer_id
+      if (method === 'debit' && !issuerId) {
+        throw new Error('Não foi possível detectar o banco emissor do cartão. Cartões de débito requerem esta informação. Verifique o número do cartão ou tente com um cartão de crédito.')
+      }
       
       // Passo 5: Tokenizar o cartão
       const cardData = {
