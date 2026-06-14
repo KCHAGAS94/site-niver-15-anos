@@ -69,12 +69,14 @@ export async function POST(req: Request) {
         }
       }
 
-      // Add issuer_id if provided (importante para débito)
+      // Add issuer_id if provided (obrigatório para débito, opcional para crédito)
       if (body.issuer_id) {
         createBody.issuer_id = Number(body.issuer_id)
         console.log('Using issuer_id:', createBody.issuer_id)
+      } else if (body.card_mode === 'debit') {
+        console.warn('No issuer_id provided for debit card - this will likely fail')
       } else {
-        console.warn('No issuer_id provided - may cause issues with debit cards')
+        console.log('No issuer_id provided for credit card - may work without it')
       }
 
       // Set payment type based on card mode
@@ -106,9 +108,13 @@ export async function POST(req: Request) {
         
         let userMessage = errorDescription || paymentError?.message || 'Erro ao processar pagamento'
         
-        // Translate common error codes to Portuguese
+        // Translate common error codes to Portuguese with actionable suggestions
         if (errorCode === '316' || errorDescription?.includes('not_result_by_params') || errorDescription?.includes('No result found')) {
-          userMessage = 'Parâmetros incorretos. Verifique: o número do cartão está correto? O banco emissor foi detectado? Tente novamente ou entre em contato.'
+          if (body.card_mode === 'debit') {
+            userMessage = 'Não foi possível processar como débito. Sugestão: Use o modo CRÉDITO que funciona melhor, ou tente outro cartão.'
+          } else {
+            userMessage = 'Parâmetros incorretos. Verifique se o número do cartão e dados estão corretos.'
+          }
         } else if (errorCode === '205') {
           userMessage = 'Número do cartão inválido. Verifique se digitou corretamente.'
         } else if (errorCode === '208' || errorCode === 'E301') {
