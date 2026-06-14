@@ -2,6 +2,7 @@
 import { useEffect, useState, useRef } from "react"
 import { Navigation } from "@/components/navigation"
 import { CardPayment, initMercadoPago } from "@mercadopago/sdk-react"
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import type { CSSProperties } from "react"
 
 export default function CheckoutPage() {
@@ -49,6 +50,7 @@ export default function CheckoutPage() {
   const [message, setMessage] = useState<string | null>(null)
   const [paymentId, setPaymentId] = useState<string | number | null>(null)
   const [paymentStatus, setPaymentStatus] = useState<string | null>(null)
+  const [approvalModalOpen, setApprovalModalOpen] = useState(false)
   const [progress, setProgress] = useState<number>(0)
   const [validationErrors, setValidationErrors] = useState<{ name?: string; email?: string }>({})
   const nameRef = useRef<HTMLInputElement | null>(null)
@@ -136,6 +138,7 @@ export default function CheckoutPage() {
           const status = data?.status || data?.payment_status || null
           setPaymentStatus(status)
           if (status === 'approved' || status === 'paid') {
+            setApprovalModalOpen(true)
             setMessage('Compra aprovada — obrigado!')
             setQr(null)
             setProgress(100)
@@ -375,6 +378,8 @@ export default function CheckoutPage() {
 
                       setMessage(statusMessage)
                       if (paymentStatusResult === 'approved') {
+                        setPaymentStatus('approved')
+                        setApprovalModalOpen(true)
                         setCardholderDocument("")
                       }
                     } catch (error: any) {
@@ -444,6 +449,36 @@ export default function CheckoutPage() {
               {message}
             </div>
           )}
+
+          <Dialog open={approvalModalOpen} onOpenChange={setApprovalModalOpen}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Pagamento aprovado</DialogTitle>
+                <DialogDescription>
+                  A compra foi confirmada com sucesso. Você pode fechar esta janela e continuar navegando.
+                </DialogDescription>
+              </DialogHeader>
+
+              <div style={{ display: 'grid', gap: 10, fontSize: 14, color: 'var(--color-foreground)' }}>
+                <div style={{ padding: '12px 14px', borderRadius: 8, background: 'rgba(34, 197, 94, 0.10)', border: '1px solid rgba(34, 197, 94, 0.25)' }}>
+                  Obrigado! O pagamento foi aprovado com sucesso.
+                </div>
+                <div style={{ lineHeight: 1.5, color: 'var(--color-muted-foreground)' }}>
+                  Se quiser, você pode voltar para o início e conferir o restante do presente.
+                </div>
+              </div>
+
+              <DialogFooter>
+                <button
+                  type="button"
+                  onClick={() => setApprovalModalOpen(false)}
+                  style={primaryButtonStyle()}
+                >
+                  Fechar
+                </button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
         </div>
       </div>
