@@ -317,6 +317,7 @@ export default function CheckoutPage() {
                   }}
                   customization={{
                     paymentMethods: {
+                      maxInstallments: method === 'credit' ? 3 : 1,
                       types: {
                         included: [method === 'debit' ? 'debit_card' : 'credit_card']
                       }

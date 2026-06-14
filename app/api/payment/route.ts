@@ -39,8 +39,9 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: 'card token required' }, { status: 400 })
       }
 
-      // for debit payments force 1 installment
-      const installments = payment_method === 'debit' ? 1 : (body.installments || 1)
+      // for debit payments force 1 installment; credit is limited to 3 installments
+      const requestedInstallments = Number(body.installments || 1)
+      const installments = payment_method === 'debit' ? 1 : Math.min(Math.max(requestedInstallments, 1), 3)
       
       // Determine payment_method_id
       let paymentMethodId = body.payment_method_id || body.card_brand
