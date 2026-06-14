@@ -1,6 +1,7 @@
 "use client"
 import { useEffect, useState, useRef } from "react"
 import { Navigation } from "@/components/navigation"
+import { CardPayment, initMercadoPago } from "@mercadopago/sdk-react"
 import type { CSSProperties } from "react"
 
 export default function CheckoutPage() {
@@ -15,7 +16,6 @@ export default function CheckoutPage() {
   const [cardYear, setCardYear] = useState("")
   const [cardCvv, setCardCvv] = useState("")
   const [cardholderDocument, setCardholderDocument] = useState("")
-  const [manualIssuerId, setManualIssuerId] = useState("")
   const [installments, setInstallments] = useState<number>(1)
   const [detectedCardBrand, setDetectedCardBrand] = useState<string | null>(null)
 
@@ -70,22 +70,10 @@ export default function CheckoutPage() {
   }, [])
 
   useEffect(() => {
-    // load Mercado Pago SDK script (optional)
-    const id = "mp-sdk"
-    if (!document.getElementById(id)) {
-      const s = document.createElement("script")
-      s.id = id
-      s.src = "https://sdk.mercadopago.com/js/v2"
-      s.async = true
-      document.body.appendChild(s)
-      // poll until SDK is available
-      const check = setInterval(() => {
-        // @ts-ignore
-        if ((window as any).MercadoPago) {
-          setMpLoaded(true)
-          clearInterval(check)
-        }
-      }, 200)
+    const publicKey = process.env.NEXT_PUBLIC_MERCADOPAGO_PUBLIC_KEY
+    if (publicKey) {
+      initMercadoPago(publicKey)
+      setMpLoaded(true)
     }
   }, [])
 
@@ -192,191 +180,9 @@ export default function CheckoutPage() {
       if (!email || !email.trim()) throw new Error("Email é obrigatório")
       if (!cardNumber || !cardMonth || !cardYear || !cardCvv) throw new Error("Preencha todos os dados do cartão")
       
-      // @ts-ignore
-      const MercadoPago = (window as any).MercadoPago
-      const publicKey = process.env.NEXT_PUBLIC_MERCADOPAGO_PUBLIC_KEY
-      
-      if (!MercadoPago || !mpLoaded) throw new Error("SDK MercadoPago não carregado — aguarde alguns segundos e tente novamente")
-      
-      // @ts-ignore
-      const mp = new MercadoPago(publicKey)
-      const bin = cardNumber.replace(/\s+/g, "").substring(0, 6)
-      
-      // Passo 1: Tentar identificar a bandeira do cartão por padrões conhecidos primeiro
-      let paymentMethodId = null
-      const firstDigit = cardNumber.replace(/\s+/g, "")[0]
-      const binPrefix = cardNumber.replace(/\s+/g, "").substring(0, 2)
-      
-      // Detecção por padrão de número (fallback inicial)
-      if (firstDigit === '4') {
-        paymentMethodId = 'visa'
-      } else if (firstDigit === '5' && (binPrefix >= '51' && binPrefix <= '55')) {
-        paymentMethodId = 'master'
-      } else if (binPrefix === '34' || binPrefix === '37') {
-        paymentMethodId = 'amex'
-      } else if (firstDigit === '6') {
-        paymentMethodId = 'elo'
-      } else if (binPrefix >= '36' && binPrefix <= '39') {
-        paymentMethodId = 'diners'
-      } else if (binPrefix >= '60' && binPrefix <= '65') {
-        paymentMethodId = 'cabal'
-      }
-      
-      // Passo 2: Tentar detectar via API do MercadoPago (mais preciso)
-      try {
-        const pmResp = await mp.getPaymentMethods({ bin })
-        console.log('Payment Methods Response:', pmResp)
-        
-        if (pmResp?.results?.[0]) {
-          paymentMethodId = pmResp.results[0].id // Sobrescreve o fallback se conseguir detectar
-          console.log('Detected payment_method_id from API:', paymentMethodId)
-        }
-      } catch (e) {
-        console.warn("Failed to detect payment method from API, using fallback:", e)
-      }
-      
-      if (!paymentMethodId) {
-        throw new Error("Não foi possível identificar a bandeira do cartão. Verifique se o número está correto.")
-      }
-      
-      console.log('Using payment_method_id:', paymentMethodId)
-      console.log('Using payment_method_id:', paymentMethodId)
-      
-      // Passo 3: Obter issuers/installments via endpoint server-side (usa access token no servidor)
-      let issuersList: any[] = []
-      let issuerId: number | null = null
+      throw new Error("O formulário de cartão agora usa o Brick automático do Mercado Pago. Use o bloco abaixo para pagar.")
 
-      console.log('🔍 Calling server-side issuer detection for', paymentMethodId, 'bin', bin)
-      try {
-        const detectResp = await fetch('/api/payment/issuers', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ bin, payment_method_id: paymentMethodId, amount, payment_type_id: method === 'debit' ? 'debit_card' : 'credit_card' })
-        })
-
-        const detectJson = await detectResp.json()
-        console.log('✅ Server issuer detection response:', detectJson)
-
-        // Normaliza a resposta: o endpoint server-side retorna { ok,status,body }
-        const getBody = (obj: any) => (obj && typeof obj === 'object' && 'body' in obj) ? obj.body : obj
-
-        const issuersBody = getBody(detectJson?.issuers)
-        if (issuersBody) {
-          if (Array.isArray(issuersBody)) issuersList = issuersBody
-          else if (Array.isArray(issuersBody?.results)) issuersList = issuersBody.results
-          else issuersList = issuersBody
-        }
-
-        const installmentsBody = getBody(detectJson?.installments)
-        if (Array.isArray(installmentsBody) && installmentsBody[0]?.issuer?.id) {
-          issuerId = installmentsBody[0].issuer.id
-          console.log('✅ Detected issuer_id from server installments:', issuerId)
-        } else if (Array.isArray(installmentsBody?.body) && installmentsBody.body[0]?.issuer?.id) {
-          issuerId = installmentsBody.body[0].issuer.id
-          console.log('✅ Detected issuer_id nested from server installments:', issuerId)
-        } else {
-          console.log('⚠️ No issuer_id found in server installments body')
-        }
-      } catch (e) {
-        console.error('❌ Server issuer detection failed:', e)
-      }
-
-      // Fallback: usar primeiro issuer da lista
-      if (!issuerId && issuersList && issuersList.length > 0) {
-        issuerId = issuersList[0].id
-        console.log('✅ Using first issuer from server list:', issuerId)
-      }
-
-      if (!issuerId && manualIssuerId.trim()) {
-        issuerId = Number(manualIssuerId)
-        console.log('✅ Using manual issuer_id:', issuerId)
-      }
-
-      console.log('🎯 Final issuer_id (server):', issuerId, 'for', paymentMethodId, method)
-
-      // Validação: débito REQUER issuer_id
-      if (method === 'debit' && !issuerId) {
-        throw new Error('Débito requer o código do banco emissor. Informe o issuer_id do cartão.')
-      }
-      
-      // Passo 5: Tokenizar o cartão
-      const cardData = {
-        cardNumber: cardNumber.replace(/\s+/g, ""),
-        expirationMonth: cardMonth,
-        expirationYear: cardYear,
-        securityCode: cardCvv,
-        cardholderName: name
-      }
-      
-      let tokenResp: any = null
-      if (mp.card && typeof mp.card.createToken === 'function') {
-        tokenResp = await mp.card.createToken(cardData)
-      } else if (typeof mp.createCardToken === 'function') {
-        tokenResp = await mp.createCardToken(cardData)
-      } else if (typeof mp.createToken === 'function') {
-        tokenResp = await mp.createToken(cardData)
-      } else {
-        throw new Error("SDK MercadoPago carregado, mas método de tokenização não encontrado")
-      }
-      
-      const token = tokenResp?.id || tokenResp?.token || tokenResp?.card_token?.id
-      if (!token) throw new Error("Falha ao tokenizar cartão")
-      
-      console.log('Token Response:', tokenResp)
-      console.log('Payment details to send:', { paymentMethodId, issuerId, method, installments: method === "credit" ? installments : 1 })
-      
-      // Passo 5: Criar o pagamento
-      const paymentBody: any = {
-        amount,
-        payment_method: "card",
-        token,
-        installments: method === "credit" ? installments : 1,
-        payer: {
-          email,
-          first_name: name
-        },
-        card_mode: method,
-        payment_method_id: paymentMethodId,
-        description: 'Presente'
-      }
-      
-      // Adicionar issuer_id se disponível
-      if (issuerId) {
-        paymentBody.issuer_id = issuerId
-      }
-      
-      // Adicionar documento se fornecido
-      if (cardholderDocument) {
-        paymentBody.payer.identification = {
-          type: 'CPF',
-          number: cardholderDocument.replace(/\D/g, '')
-        }
-      }
-      
-      console.log('==== SENDING TO API ====')
-      console.log(JSON.stringify(paymentBody, null, 2))
-      console.log('========================')
-      
-      const res = await fetch("/api/payment", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(paymentBody)
-      })
-      
-      const data = await res.json()
-      if (!res.ok) {
-        const errorMsg = data?.error || "Erro ao processar cartão"
-        console.error('Payment error:', data)
-        
-        // Se for erro de parâmetros com débito, pedir o issuer_id manual
-        if ((data?.code === '316' || errorMsg.includes('Parâmetros incorretos') || errorMsg.includes('No result found')) && method === 'debit') {
-          throw new Error('Não foi possível processar como débito. Informe o código do banco emissor (issuer_id) do cartão e tente novamente.')
-        }
-        
-        throw new Error(errorMsg)
-      }
-      
-      const paymentStatus = data?.status || data?.body?.status
+      const paymentStatus = null
       const statusMessage = paymentStatus === 'approved' ? 'Pagamento aprovado com sucesso!' : 
                            paymentStatus === 'pending' ? 'Pagamento pendente de confirmação' :
                            paymentStatus === 'in_process' ? 'Pagamento em processamento' :
@@ -435,7 +241,7 @@ export default function CheckoutPage() {
           <h2 style={{ textAlign: "center", color: "var(--color-primary)", marginBottom: 18 }}>Finalizar Presente</h2>
 
         <div style={{ background: "var(--color-card)", padding: 24, borderRadius: 12, boxShadow: "0 6px 18px rgba(0,0,0,0.06)" }}>
-          <form onSubmit={payCard}>
+          <form onSubmit={(e) => e.preventDefault()}>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px,1fr))", gap: 12 }}>
               <div>
                 <label style={{ display: "block", fontSize: 12, color: "var(--color-muted-foreground)" }}>
@@ -487,124 +293,106 @@ export default function CheckoutPage() {
 
             {(method === "debit" || method === "credit") && (
               <div style={{ marginTop: 16 }}>
-                <div style={{ display: "grid", gap: 12 }}>
-                  <div>
-                    <label style={{ fontSize: 12, color: "var(--color-muted-foreground)" }}>
-                      Número do cartão
-                      {detectedCardBrand && (
-                        <span style={{ marginLeft: 8, fontWeight: 600, color: 'var(--color-primary)' }}>
-                          • {detectedCardBrand}
-                        </span>
-                      )}
-                    </label>
-                    <input 
-                      value={cardNumber} 
-                      onChange={(e) => setCardNumber(e.target.value)} 
-                      placeholder="4111 1111 1111 1111" 
-                      style={inputStyle()} 
-                      maxLength={19}
-                    />
-                  </div>
-                  <div style={{ display: "flex", gap: 8 }}>
-                    <input 
-                      value={cardMonth} 
-                      onChange={(e) => setCardMonth(e.target.value)} 
-                      placeholder="MM" 
-                      style={inputStyle()} 
-                      maxLength={2}
-                    />
-                    <input 
-                      value={cardYear} 
-                      onChange={(e) => setCardYear(e.target.value)} 
-                      placeholder="AAAA" 
-                      style={inputStyle()} 
-                      maxLength={4}
-                    />
-                    <input 
-                      value={cardCvv} 
-                      onChange={(e) => setCardCvv(e.target.value)} 
-                      placeholder="CVV" 
-                      style={inputStyle()} 
-                      maxLength={4}
-                    />
-                  </div>
-                  
-                  <div>
-                    <label style={{ fontSize: 12, color: "var(--color-muted-foreground)" }}>CPF do titular (opcional, mas recomendado)</label>
-                    <input 
-                      value={cardholderDocument} 
-                      onChange={(e) => setCardholderDocument(e.target.value)} 
-                      placeholder="000.000.000-00" 
-                      style={inputStyle()} 
-                      maxLength={14}
-                    />
-                  </div>
-
-                  {method === "debit" && (
-                    <div>
-                      <label style={{ fontSize: 12, color: "var(--color-muted-foreground)" }}>
-                        Código do banco emissor (issuer_id) *
-                      </label>
-                      <input
-                        value={manualIssuerId}
-                        onChange={(e) => setManualIssuerId(e.target.value)}
-                        placeholder="Ex: 25"
-                        style={inputStyle()}
-                        inputMode="numeric"
-                      />
-                    </div>
-                  )}
-
-                  {method === "credit" && (
-                    <div>
-                      <label style={{ fontSize: 12, color: "var(--color-muted-foreground)" }}>Parcelas</label>
-                      <select value={installments} onChange={(e) => setInstallments(Number(e.target.value))} style={inputStyle()}>
-                        {Array.from({ length: 12 }).map((_, i) => (
-                          <option key={i} value={i + 1}>{i + 1}x de R$ {(Number(amount) / (i + 1)).toFixed(2)}</option>
-                        ))}
-                      </select>
-                    </div>
-                  )}
-
-                  <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
-                    <button 
-                      type="submit" 
-                      disabled={loading || !mpLoaded} 
-                      style={primaryButtonStyle()}
-                    >
-                      {loading ? "Processando..." : "Pagar com Cartão"}
-                    </button>
-                    <button 
-                      type="button" 
-                      onClick={() => { 
-                        setCardNumber("")
-                        setCardMonth("")
-                        setCardYear("")
-                        setCardCvv("")
-                        setCardholderDocument("")
-                        setManualIssuerId("")
-                      }} 
-                      style={secondaryButtonStyle()}
-                    >
-                      Limpar
-                    </button>
-                  </div>
-                  
-                  <div style={{ marginTop: 8, padding: '12px 16px', background: 'rgba(99, 102, 241, 0.1)', borderRadius: 8, border: '1px solid rgba(99, 102, 241, 0.3)' }}>
-                    <p style={{ fontSize: 12, color: 'var(--color-foreground)', margin: 0, lineHeight: 1.5 }}>
-                      🔒 <strong>Pagamento 100% seguro</strong> - Os dados do seu cartão são processados diretamente pelo Mercado Pago, sem passar pelos nossos servidores.
-                    </p>
-                  </div>
-                  
-                  {process.env.NODE_ENV === 'development' && (
-                    <div style={{ marginTop: 8, padding: '10px 14px', background: 'rgba(251, 191, 36, 0.1)', borderRadius: 8, border: '1px solid rgba(251, 191, 36, 0.3)', fontSize: 11 }}>
-                      <strong>💳 Cartões de teste:</strong><br/>
-                      • Visa: 4509 9535 6623 3704<br/>
-                      • Master: 5031 4332 1540 6351<br/>
-                      • Use qualquer CVV (ex: 123) e data futura
-                    </div>
-                  )}
+                <div style={{ marginBottom: 12, fontSize: 13, color: "var(--color-muted-foreground)" }}>
+                  O formulário abaixo é automático e o Mercado Pago busca emissor e parcelas sozinho.
                 </div>
+
+                <CardPayment
+                  id="cardPaymentBrick_container"
+                  locale="pt-BR"
+                  initialization={{
+                    amount: Number(amount),
+                    payer: {
+                      email,
+                      identification: cardholderDocument
+                        ? {
+                            type: 'CPF',
+                            number: cardholderDocument.replace(/\D/g, '')
+                          }
+                        : undefined
+                    }
+                  }}
+                  customization={{
+                    paymentMethods: {
+                      types: {
+                        included: [method === 'debit' ? 'debit_card' : 'credit_card']
+                      }
+                    },
+                    visual: {
+                      hideFormTitle: true
+                    }
+                  }}
+                  onReady={() => setMpLoaded(true)}
+                  onError={(error) => {
+                    console.error('CardPayment Brick error:', error)
+                    setMessage('Não foi possível carregar o formulário de cartão. Tente recarregar a página.')
+                  }}
+                  onSubmit={async (data) => {
+                    setLoading(true)
+                    setMessage(null)
+                    try {
+                      const paymentBody = {
+                        amount,
+                        payment_method: 'card',
+                        token: data.token,
+                        installments: data.installments,
+                        payer: {
+                          email,
+                          first_name: name,
+                          identification: cardholderDocument
+                            ? {
+                                type: 'CPF',
+                                number: cardholderDocument.replace(/\D/g, '')
+                              }
+                            : undefined
+                        },
+                        card_mode: method,
+                        payment_method_id: data.payment_method_id,
+                        issuer_id: data.issuer_id,
+                        description: 'Presente'
+                      }
+
+                      console.log('==== SENDING TO API ====')
+                      console.log(JSON.stringify(paymentBody, null, 2))
+                      console.log('========================')
+
+                      const res = await fetch('/api/payment', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(paymentBody)
+                      })
+
+                      const result = await res.json()
+                      if (!res.ok) {
+                        throw new Error(result?.error || 'Erro ao processar cartão')
+                      }
+
+                      const paymentStatusResult = result?.status || result?.body?.status
+                      const statusMessage = paymentStatusResult === 'approved' ? 'Pagamento aprovado com sucesso!' :
+                        paymentStatusResult === 'pending' ? 'Pagamento pendente de confirmação' :
+                        paymentStatusResult === 'in_process' ? 'Pagamento em processamento' :
+                        'Pagamento criado: ' + paymentStatusResult
+
+                      setMessage(statusMessage)
+                      if (paymentStatusResult === 'approved') {
+                        setCardholderDocument("")
+                      }
+                    } catch (error: any) {
+                      setMessage(error?.message ?? String(error))
+                    } finally {
+                      setLoading(false)
+                    }
+                  }}
+                />
+
+                {process.env.NODE_ENV === 'development' && (
+                  <div style={{ marginTop: 8, padding: '10px 14px', background: 'rgba(251, 191, 36, 0.1)', borderRadius: 8, border: '1px solid rgba(251, 191, 36, 0.3)', fontSize: 11 }}>
+                    <strong>💳 Cartões de teste:</strong><br/>
+                    • Visa: 4509 9535 6623 3704<br/>
+                    • Master: 5031 4332 1540 6351<br/>
+                    • Use qualquer CVV (ex: 123) e data futura
+                  </div>
+                )}
               </div>
             )}
             { (method === 'debit' || method === 'credit') && !mpLoaded && (
