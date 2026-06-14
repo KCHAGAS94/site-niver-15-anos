@@ -42,8 +42,14 @@ export async function POST(req: Request) {
       // for debit payments force 1 installment
       const installments = payment_method === 'debit' ? 1 : (body.installments || 1)
       
-      // Determine payment_method_id - try multiple sources, fallback to visa
-      let paymentMethodId = body.payment_method_id || body.card_brand || 'visa'
+      // Determine payment_method_id
+      let paymentMethodId = body.payment_method_id || body.card_brand
+      
+      if (!paymentMethodId) {
+        return NextResponse.json({ 
+          error: 'payment_method_id é obrigatório' 
+        }, { status: 400 })
+      }
       
       const createBody: any = {
         transaction_amount: Number(amount),
@@ -53,16 +59,22 @@ export async function POST(req: Request) {
         payment_method_id: paymentMethodId,
         payer: {
           email: payer?.email || 'no-reply@example.com',
-          first_name: payer?.first_name || payer?.name || ''
+          first_name: payer?.first_name || payer?.name || '',
+          ...(body.payer?.identification && {
+            identification: {
+              type: body.payer.identification.type || 'CPF',
+              number: body.payer.identification.number
+            }
+          })
         }
       }
 
-      // Only add issuer_id if provided (not required for all card types)
+      // Add issuer_id if provided (importante para débito)
       if (body.issuer_id) {
         createBody.issuer_id = Number(body.issuer_id)
       }
 
-      // if client explicitly chose debit mode, hint to MercadoPago
+      // Set payment type based on card mode
       if (body.card_mode === 'debit') {
         createBody.payment_type_id = 'debit_card'
       } else if (body.card_mode === 'credit') {
@@ -74,34 +86,13 @@ export async function POST(req: Request) {
       try {
         const payment = await paymentClient.create({ body: createBody })
 
-        console.log('Payment created:', JSON.stringify(payment, null, 2))
+        console.log('Payment created successfully:', {
+          id: payment?.id,
+          status: payment?.status,
+          status_detail: payment?.status_detail
+        })
 
-        // If payment is not immediately approved, poll for a short time to catch quick confirmations
-        const status = payment?.status || payment?.body?.status || null
-        if (status && (status === 'approved' || status === 'paid')) {
-          return NextResponse.json(payment)
-        }
-
-        // Polling loop (up to ~10s total)
-        const paymentId = payment?.id || payment?.body?.id || payment?.body?.payment?.id
-        if (paymentId) {
-          const maxAttempts = 5
-          const delayMs = 2000
-          for (let i = 0; i < maxAttempts; i++) {
-            await new Promise((r) => setTimeout(r, delayMs))
-            try {
-              const check = await paymentClient.get({ id: paymentId })
-              const checkStatus = check?.status || check?.body?.status || null
-              if (checkStatus && (checkStatus === 'approved' || checkStatus === 'paid')) {
-                return NextResponse.json(check)
-              }
-            } catch (e) {
-              // ignore transient polling errors
-            }
-          }
-        }
-
-        // return initial payment object if still pending
+        // Return payment immediately - client will handle polling if needed
         return NextResponse.json(payment)
       } catch (paymentError: any) {
         // Extract detailed error message from MercadoPago response
@@ -113,20 +104,30 @@ export async function POST(req: Request) {
         let userMessage = errorDescription || paymentError?.message || 'Erro ao processar pagamento'
         
         // Translate common error codes to Portuguese
-        if (errorCode === '316' || errorDescription?.includes('not_result_by_params')) {
-          userMessage = 'Não foi possível processar este cartão. Por favor, verifique os dados ou use o Checkout Pro.'
+        if (errorCode === '316' || errorDescription?.includes('not_result_by_params') || errorDescription?.includes('No result found')) {
+          userMessage = 'Parâmetros incorretos. Verifique: o número do cartão está correto? O banco emissor foi detectado? Tente novamente ou entre em contato.'
         } else if (errorCode === '205') {
-          userMessage = 'Número do cartão inválido'
+          userMessage = 'Número do cartão inválido. Verifique se digitou corretamente.'
         } else if (errorCode === '208' || errorCode === 'E301') {
-          userMessage = 'Mês de expiração inválido'
+          userMessage = 'Mês de expiração inválido. Use formato MM (01-12).'
         } else if (errorCode === '209' || errorCode === 'E302') {
-          userMessage = 'Ano de expiração inválido'
+          userMessage = 'Ano de expiração inválido. Use formato AAAA.'
         } else if (errorCode === '212' || errorCode === '213' || errorCode === '214') {
-          userMessage = 'Documento inválido'
+          userMessage = 'CPF inválido. Verifique o número digitado.'
         } else if (errorCode === '221' || errorCode === 'E203') {
           userMessage = 'Nome do titular inválido'
         } else if (errorCode === '224' || errorCode === 'E302') {
-          userMessage = 'Código de segurança inválido'
+          userMessage = 'Código de segurança (CVV) inválido'
+        } else if (errorCode === 'cc_rejected_bad_filled_card_number') {
+          userMessage = 'Número do cartão preenchido incorretamente'
+        } else if (errorCode === 'cc_rejected_bad_filled_date') {
+          userMessage = 'Data de validade incorreta'
+        } else if (errorCode === 'cc_rejected_bad_filled_security_code') {
+          userMessage = 'CVV incorreto'
+        } else if (errorCode === 'cc_rejected_call_for_authorize') {
+          userMessage = 'Você deve autorizar o pagamento com o banco emissor'
+        } else if (errorCode === 'cc_rejected_insufficient_amount') {
+          userMessage = 'Saldo insuficiente no cartão'
         }
         
         return NextResponse.json({ 

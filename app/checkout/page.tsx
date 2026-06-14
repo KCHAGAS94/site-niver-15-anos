@@ -14,6 +14,7 @@ export default function CheckoutPage() {
   const [cardMonth, setCardMonth] = useState("")
   const [cardYear, setCardYear] = useState("")
   const [cardCvv, setCardCvv] = useState("")
+  const [cardholderDocument, setCardholderDocument] = useState("")
   const [installments, setInstallments] = useState<number>(1)
 
   const [qr, setQr] = useState<string | null>(null)
@@ -158,99 +159,145 @@ export default function CheckoutPage() {
     setLoading(true)
     setMessage(null)
     try {
-      // try to tokenise with Mercado Pago SDK
+      // Validação de campos obrigatórios
+      if (!name || !name.trim()) throw new Error("Nome é obrigatório")
+      if (!email || !email.trim()) throw new Error("Email é obrigatório")
+      if (!cardNumber || !cardMonth || !cardYear || !cardCvv) throw new Error("Preencha todos os dados do cartão")
+      
       // @ts-ignore
       const MercadoPago = (window as any).MercadoPago
       const publicKey = process.env.NEXT_PUBLIC_MERCADOPAGO_PUBLIC_KEY
-      // simple validation
-      if (!cardNumber || !cardMonth || !cardYear || !cardCvv) throw new Error("Preencha os dados do cartão")
+      
       if (!MercadoPago || !mpLoaded) throw new Error("SDK MercadoPago não carregado — aguarde alguns segundos e tente novamente")
+      
       // @ts-ignore
       const mp = new MercadoPago(publicKey)
-      const cardData = { cardNumber: cardNumber.replace(/\s+/g, ""), expirationMonth: cardMonth, expirationYear: cardYear, securityCode: cardCvv, cardholderName: name }
-
-      // try multiple tokenization entry points depending on SDK version
+      const bin = cardNumber.replace(/\s+/g, "").substring(0, 6)
+      
+      // Passo 1: Identificar o método de pagamento (bandeira do cartão)
+      let paymentMethodId = null
+      let issuersList = []
+      
+      try {
+        const pmResp = await mp.getPaymentMethods({ bin })
+        console.log('Payment Methods Response:', pmResp)
+        
+        if (pmResp?.results?.[0]) {
+          paymentMethodId = pmResp.results[0].id
+          console.log('Detected payment_method_id:', paymentMethodId)
+        }
+      } catch (e) {
+        console.error("Failed to detect payment method:", e)
+        throw new Error("Não foi possível identificar a bandeira do cartão. Verifique o número digitado.")
+      }
+      
+      if (!paymentMethodId) {
+        throw new Error("Não foi possível identificar a bandeira do cartão")
+      }
+      
+      // Passo 2: Obter lista de issuers (bancos emissores) para este método de pagamento
+      try {
+        const issuersResp = await mp.getIssuers({ paymentMethodId, bin })
+        console.log('Issuers Response:', issuersResp)
+        issuersList = issuersResp || []
+      } catch (e) {
+        console.error("Failed to get issuers:", e)
+      }
+      
+      // Passo 3: Obter o issuer_id correto usando getInstallments
+      let issuerId = null
+      
+      try {
+        const installmentsResp = await mp.getInstallments({
+          amount: String(amount),
+          bin: bin,
+          paymentTypeId: method === 'debit' ? 'debit_card' : 'credit_card'
+        })
+        console.log('Installments Response:', installmentsResp)
+        
+        if (installmentsResp?.[0]?.issuer?.id) {
+          issuerId = installmentsResp[0].issuer.id
+          console.log('Detected issuer_id:', issuerId)
+        }
+      } catch (e) {
+        console.error("Failed to get installments:", e)
+      }
+      
+      // Fallback: usar o primeiro issuer da lista se não conseguiu detectar
+      if (!issuerId && issuersList.length > 0) {
+        issuerId = issuersList[0].id
+        console.log('Using first issuer from list:', issuerId)
+      }
+      
+      // Passo 4: Tokenizar o cartão
+      const cardData = {
+        cardNumber: cardNumber.replace(/\s+/g, ""),
+        expirationMonth: cardMonth,
+        expirationYear: cardYear,
+        securityCode: cardCvv,
+        cardholderName: name
+      }
+      
       let tokenResp: any = null
       if (mp.card && typeof mp.card.createToken === 'function') {
-        // common pattern
         tokenResp = await mp.card.createToken(cardData)
       } else if (typeof mp.createCardToken === 'function') {
         tokenResp = await mp.createCardToken(cardData)
       } else if (typeof mp.createToken === 'function') {
         tokenResp = await mp.createToken(cardData)
       } else {
-        throw new Error("SDK MercadoPago carregado, mas método de tokenização não encontrado. Verifique versão do SDK.")
+        throw new Error("SDK MercadoPago carregado, mas método de tokenização não encontrado")
       }
-
+      
       const token = tokenResp?.id || tokenResp?.token || tokenResp?.card_token?.id
       if (!token) throw new Error("Falha ao tokenizar cartão")
-
-      // try to infer card brand from token response when available
-      let cardBrand = tokenResp?.payment_method_id || tokenResp?.card?.brand || tokenResp?.card?.network || tokenResp?.cardholder?.brand || null
-      let issuerId = tokenResp?.issuer_id || null
       
-      // If still no brand, try to identify from card number BIN using SDK
-      if (!cardBrand) {
-        try {
-          const bin = cardNumber.replace(/\s+/g, "").substring(0, 6)
-          const pmResp = await mp.getPaymentMethods({ bin })
-          if (pmResp?.results?.[0]) {
-            cardBrand = cardBrand || pmResp.results[0].id
-          }
-        } catch (e) {
-          console.warn("Failed to detect payment method from BIN:", e)
-        }
-      }
+      console.log('Token Response:', tokenResp)
+      console.log('Payment details to send:', { paymentMethodId, issuerId, method, installments: method === "credit" ? installments : 1 })
       
-      // Fallback: identify by first digits
-      if (!cardBrand) {
-        const firstDigit = cardNumber.replace(/\s+/g, "")[0]
-        const binPrefix = cardNumber.replace(/\s+/g, "").substring(0, 2)
-        if (firstDigit === '4') cardBrand = 'visa'
-        else if (firstDigit === '5' || (binPrefix >= '51' && binPrefix <= '55')) cardBrand = 'master'
-        else if (firstDigit === '3') cardBrand = 'amex'
-        else if (firstDigit === '6') cardBrand = 'elo'
-        else cardBrand = 'visa' // default fallback
-      }
-
-      console.log('Payment details:', { cardBrand, issuerId, method, installments })
-
+      // Passo 5: Criar o pagamento
       const paymentBody: any = {
         amount,
         payment_method: "card",
         token,
         installments: method === "credit" ? installments : 1,
-        payer: { email, first_name: name },
+        payer: {
+          email,
+          first_name: name
+        },
         card_mode: method,
-        payment_method_id: cardBrand,
+        payment_method_id: paymentMethodId,
         description: 'Presente'
       }
-
-      // Only include issuer_id if we have it
+      
+      // Adicionar issuer_id se disponível
       if (issuerId) {
         paymentBody.issuer_id = issuerId
       }
-
+      
+      // Adicionar documento se fornecido
+      if (cardholderDocument) {
+        paymentBody.payer.identification = {
+          type: 'CPF',
+          number: cardholderDocument.replace(/\D/g, '')
+        }
+      }
+      
       const res = await fetch("/api/payment", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(paymentBody)
       })
+      
       const data = await res.json()
       if (!res.ok) {
         const errorMsg = data?.error || "Erro ao processar cartão"
         console.error('Payment error:', data)
-        
-        // Se for erro de parâmetros, sugere usar Checkout Pro
-        if (data?.code === '316' || errorMsg.includes('not_result_by_params') || errorMsg.includes('No result found')) {
-          throw new Error('Não foi possível processar este cartão com os dados fornecidos. Por favor, use o botão "Checkout Pro" para uma experiência de pagamento mais completa.')
-        }
-        
         throw new Error(errorMsg)
       }
       
       const paymentStatus = data?.status || data?.body?.status
-      const statusMessage = paymentStatus === 'approved' ? 'Pagamento aprovado!' : 
+      const statusMessage = paymentStatus === 'approved' ? 'Pagamento aprovado com sucesso!' : 
                            paymentStatus === 'pending' ? 'Pagamento pendente de confirmação' :
                            paymentStatus === 'in_process' ? 'Pagamento em processamento' :
                            'Pagamento criado: ' + paymentStatus
@@ -263,6 +310,7 @@ export default function CheckoutPage() {
         setCardMonth("")
         setCardYear("")
         setCardCvv("")
+        setCardholderDocument("")
       }
     } catch (err: any) {
       setMessage(err?.message ?? String(err))
@@ -362,12 +410,47 @@ export default function CheckoutPage() {
                 <div style={{ display: "grid", gap: 12 }}>
                   <div>
                     <label style={{ fontSize: 12, color: "var(--color-muted-foreground)" }}>Número do cartão</label>
-                    <input value={cardNumber} onChange={(e) => setCardNumber(e.target.value)} placeholder="4111 1111 1111 1111" style={inputStyle()} />
+                    <input 
+                      value={cardNumber} 
+                      onChange={(e) => setCardNumber(e.target.value)} 
+                      placeholder="4111 1111 1111 1111" 
+                      style={inputStyle()} 
+                      maxLength={19}
+                    />
                   </div>
                   <div style={{ display: "flex", gap: 8 }}>
-                    <input value={cardMonth} onChange={(e) => setCardMonth(e.target.value)} placeholder="MM" style={inputStyle()} />
-                    <input value={cardYear} onChange={(e) => setCardYear(e.target.value)} placeholder="YYYY" style={inputStyle()} />
-                    <input value={cardCvv} onChange={(e) => setCardCvv(e.target.value)} placeholder="CVV" style={inputStyle()} />
+                    <input 
+                      value={cardMonth} 
+                      onChange={(e) => setCardMonth(e.target.value)} 
+                      placeholder="MM" 
+                      style={inputStyle()} 
+                      maxLength={2}
+                    />
+                    <input 
+                      value={cardYear} 
+                      onChange={(e) => setCardYear(e.target.value)} 
+                      placeholder="AAAA" 
+                      style={inputStyle()} 
+                      maxLength={4}
+                    />
+                    <input 
+                      value={cardCvv} 
+                      onChange={(e) => setCardCvv(e.target.value)} 
+                      placeholder="CVV" 
+                      style={inputStyle()} 
+                      maxLength={4}
+                    />
+                  </div>
+                  
+                  <div>
+                    <label style={{ fontSize: 12, color: "var(--color-muted-foreground)" }}>CPF do titular (opcional, mas recomendado)</label>
+                    <input 
+                      value={cardholderDocument} 
+                      onChange={(e) => setCardholderDocument(e.target.value)} 
+                      placeholder="000.000.000-00" 
+                      style={inputStyle()} 
+                      maxLength={14}
+                    />
                   </div>
 
                   {method === "credit" && (
@@ -375,27 +458,40 @@ export default function CheckoutPage() {
                       <label style={{ fontSize: 12, color: "var(--color-muted-foreground)" }}>Parcelas</label>
                       <select value={installments} onChange={(e) => setInstallments(Number(e.target.value))} style={inputStyle()}>
                         {Array.from({ length: 12 }).map((_, i) => (
-                          <option key={i} value={i + 1}>{i + 1}x</option>
+                          <option key={i} value={i + 1}>{i + 1}x de R$ {(Number(amount) / (i + 1)).toFixed(2)}</option>
                         ))}
                       </select>
                     </div>
                   )}
 
-                  <div style={{ display: "flex", gap: 12, justifyContent: "center" }}>
-                    <button type="submit" disabled={loading || ((method === 'debit' || method === 'credit') && !mpLoaded)} style={primaryButtonStyle()}>{loading ? "Processando..." : "Pagar"}</button>
-                    <button type="button" onClick={() => { setCardNumber(""); setCardMonth(""); setCardYear(""); setCardCvv("") }} style={secondaryButtonStyle()}>Limpar</button>
-                    {(method === 'credit' || method === 'debit') && (
-                      <button type="button" onClick={startCheckoutPro} disabled={loading} style={{ ...primaryButtonStyle(), background: '#0ea5a4' }}>Checkout Pro</button>
-                    )}
+                  <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
+                    <button 
+                      type="submit" 
+                      disabled={loading || !mpLoaded} 
+                      style={primaryButtonStyle()}
+                    >
+                      {loading ? "Processando..." : "Pagar com Cartão"}
+                    </button>
+                    <button 
+                      type="button" 
+                      onClick={() => { 
+                        setCardNumber("")
+                        setCardMonth("")
+                        setCardYear("")
+                        setCardCvv("")
+                        setCardholderDocument("")
+                      }} 
+                      style={secondaryButtonStyle()}
+                    >
+                      Limpar
+                    </button>
                   </div>
                   
-                  {method === 'debit' && (
-                    <div style={{ marginTop: 12, padding: '12px 16px', background: 'rgba(14, 165, 164, 0.1)', borderRadius: 8, border: '1px solid rgba(14, 165, 164, 0.3)' }}>
-                      <p style={{ fontSize: 13, color: 'var(--color-foreground)', margin: 0 }}>
-                        💡 <strong>Dica:</strong> Se o pagamento direto não funcionar, use o botão <strong>"Checkout Pro"</strong> para uma experiência de pagamento completa e segura do Mercado Pago.
-                      </p>
-                    </div>
-                  )}
+                  <div style={{ marginTop: 8, padding: '12px 16px', background: 'rgba(99, 102, 241, 0.1)', borderRadius: 8, border: '1px solid rgba(99, 102, 241, 0.3)' }}>
+                    <p style={{ fontSize: 12, color: 'var(--color-foreground)', margin: 0, lineHeight: 1.5 }}>
+                      🔒 <strong>Pagamento 100% seguro</strong> - Os dados do seu cartão são processados diretamente pelo Mercado Pago, sem passar pelos nossos servidores.
+                    </p>
+                  </div>
                 </div>
               </div>
             )}
