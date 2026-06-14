@@ -301,6 +301,7 @@ export default function CheckoutPage() {
                 </div>
 
                 <CardPayment
+                  key={method}
                   id="cardPaymentBrick_container"
                   locale="pt-BR"
                   initialization={{
@@ -317,6 +318,7 @@ export default function CheckoutPage() {
                   }}
                   customization={{
                     paymentMethods: {
+                      minInstallments: 1,
                       maxInstallments: method === 'credit' ? 3 : 1,
                       types: {
                         included: [method === 'debit' ? 'debit_card' : 'credit_card']
