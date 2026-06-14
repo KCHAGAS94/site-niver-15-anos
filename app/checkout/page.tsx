@@ -79,6 +79,15 @@ export default function CheckoutPage() {
     }
   }, [])
 
+  useEffect(() => {
+    setQr(null)
+    setPaymentId(null)
+    setPaymentStatus(null)
+    setApprovalModalOpen(false)
+    setProgress(0)
+    setMessage(null)
+  }, [method])
+
   async function createPix() {
     setLoading(true)
     setMessage(null)
@@ -410,7 +419,7 @@ export default function CheckoutPage() {
             )}
           </form>
 
-          {qr && (
+          {method === 'pix' && qr && (
             <div style={{ marginTop: 18, textAlign: "center" }}>
               <h3 style={{ color: "var(--color-primary)" }}>QR Code PIX</h3>
               <img src={qr} alt="PIX QR" style={{ maxWidth: 280, borderRadius: 8, border: "1px solid var(--color-border)" }} />
@@ -418,7 +427,7 @@ export default function CheckoutPage() {
           )}
 
           {/* Status area */}
-          {paymentId && (
+          {method === 'pix' && paymentId && (
             <div style={{ marginTop: 16 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
