@@ -23,17 +23,25 @@ export async function POST(req: Request) {
     // 1) Try to fetch issuers
     const issuersUrl = `https://api.mercadopago.com/v1/payment_methods/card_issuers?payment_method_id=${encodeURIComponent(payment_method_id)}&bin=${encodeURIComponent(bin)}`
     const issuersResp = await fetch(issuersUrl, { headers })
-    const issuersData = issuersResp.ok ? await issuersResp.json() : null
+    const issuersText = await issuersResp.text()
+    let issuersJson = null
+    try { issuersJson = JSON.parse(issuersText) } catch (e) { /* not json */ }
+    const issuersResult = { ok: issuersResp.ok, status: issuersResp.status, body: issuersJson ?? issuersText }
 
     // 2) Try to fetch installments (only if amount provided)
-    let installmentsData = null
+    let installmentsResult = null
     if (amount) {
       const installmentsUrl = `https://api.mercadopago.com/v1/payment_methods/installments?amount=${encodeURIComponent(String(amount))}&bin=${encodeURIComponent(bin)}${payment_type_id ? `&payment_type_id=${encodeURIComponent(payment_type_id)}` : ''}`
       const instResp = await fetch(installmentsUrl, { headers })
-      installmentsData = instResp.ok ? await instResp.json() : null
+      const instText = await instResp.text()
+      let instJson = null
+      try { instJson = JSON.parse(instText) } catch (e) { /* not json */ }
+      installmentsResult = { ok: instResp.ok, status: instResp.status, body: instJson ?? instText }
     }
 
-    return NextResponse.json({ issuers: issuersData, installments: installmentsData })
+    console.log('Issuer detection results:', { issuersResult, installmentsResult })
+
+    return NextResponse.json({ issuers: issuersResult, installments: installmentsResult })
   } catch (err: any) {
     return NextResponse.json({ error: String(err) }, { status: 500 })
   }
