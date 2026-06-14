@@ -277,17 +277,6 @@ export default function CheckoutPage() {
         console.log('Using first issuer from list:', issuerId)
       }
       
-      // Fallback adicional: para cartão de débito sem issuer, tentar issuer genérico
-      if (method === 'debit' && !issuerId) {
-        // Tentar com issuer padrão baseado na bandeira
-        if (paymentMethodId === 'visa') {
-          issuerId = 25 // Banco genérico Visa
-        } else if (paymentMethodId === 'master') {
-          issuerId = 3 // Banco genérico Master
-        }
-        console.log('Using fallback issuer_id for debit:', issuerId)
-      }
-      
       console.log('Final issuer_id:', issuerId, 'for payment method:', paymentMethodId, 'type:', method)
       
       // Passo 5: Tokenizar o cartão
@@ -343,6 +332,10 @@ export default function CheckoutPage() {
           number: cardholderDocument.replace(/\D/g, '')
         }
       }
+      
+      console.log('==== SENDING TO API ====')
+      console.log(JSON.stringify(paymentBody, null, 2))
+      console.log('========================')
       
       const res = await fetch("/api/payment", {
         method: "POST",
@@ -450,11 +443,6 @@ export default function CheckoutPage() {
                   <label style={{ display: "flex", gap: 6, alignItems: "center" }}><input type="radio" checked={method === "debit"} onChange={() => setMethod("debit")} /> Débito</label>
                   <label style={{ display: "flex", gap: 6, alignItems: "center" }}><input type="radio" checked={method === "credit"} onChange={() => setMethod("credit")} /> Crédito</label>
                 </div>
-                {(method === 'debit' || method === 'credit') && (
-                  <div style={{ marginTop: 8, fontSize: 11, color: 'var(--color-muted-foreground)' }}>
-                    💡 {method === 'credit' ? 'Recomendado - funciona com todos os cartões' : 'Pode ter limitações - se não funcionar, use Crédito'}
-                  </div>
-                )}
               </div>
             </div>
 
@@ -571,14 +559,6 @@ export default function CheckoutPage() {
                       🔒 <strong>Pagamento 100% seguro</strong> - Os dados do seu cartão são processados diretamente pelo Mercado Pago, sem passar pelos nossos servidores.
                     </p>
                   </div>
-                  
-                  {method === 'debit' && (
-                    <div style={{ marginTop: 8, padding: '12px 16px', background: 'rgba(251, 191, 36, 0.1)', borderRadius: 8, border: '1px solid rgba(251, 191, 36, 0.3)' }}>
-                      <p style={{ fontSize: 12, color: 'var(--color-foreground)', margin: 0, lineHeight: 1.5 }}>
-                        ⚠️ <strong>Atenção:</strong> Cartões de débito podem ter limitações. Se ocorrer erro, <strong>selecione "Crédito"</strong> e pague em 1x (funciona como débito mas é mais compatível).
-                      </p>
-                    </div>
-                  )}
                   
                   {process.env.NODE_ENV === 'development' && (
                     <div style={{ marginTop: 8, padding: '10px 14px', background: 'rgba(251, 191, 36, 0.1)', borderRadius: 8, border: '1px solid rgba(251, 191, 36, 0.3)', fontSize: 11 }}>
