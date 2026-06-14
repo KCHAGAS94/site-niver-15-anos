@@ -15,6 +15,7 @@ export default function CheckoutPage() {
   const [cardYear, setCardYear] = useState("")
   const [cardCvv, setCardCvv] = useState("")
   const [cardholderDocument, setCardholderDocument] = useState("")
+  const [manualIssuerId, setManualIssuerId] = useState("")
   const [installments, setInstallments] = useState<number>(1)
   const [detectedCardBrand, setDetectedCardBrand] = useState<string | null>(null)
 
@@ -286,11 +287,16 @@ export default function CheckoutPage() {
         console.log('✅ Using first issuer from server list:', issuerId)
       }
 
+      if (!issuerId && manualIssuerId.trim()) {
+        issuerId = Number(manualIssuerId)
+        console.log('✅ Using manual issuer_id:', issuerId)
+      }
+
       console.log('🎯 Final issuer_id (server):', issuerId, 'for', paymentMethodId, method)
 
       // Validação: débito REQUER issuer_id
       if (method === 'debit' && !issuerId) {
-        throw new Error('Não foi possível detectar o banco emissor do cartão. Cartões de débito requerem esta informação.')
+        throw new Error('Débito requer o código do banco emissor. Informe o issuer_id do cartão.')
       }
       
       // Passo 5: Tokenizar o cartão
@@ -362,9 +368,9 @@ export default function CheckoutPage() {
         const errorMsg = data?.error || "Erro ao processar cartão"
         console.error('Payment error:', data)
         
-        // Se for erro de parâmetros com débito, sugerir crédito
+        // Se for erro de parâmetros com débito, pedir o issuer_id manual
         if ((data?.code === '316' || errorMsg.includes('Parâmetros incorretos') || errorMsg.includes('No result found')) && method === 'debit') {
-          throw new Error('Não foi possível processar como débito. Tente: 1) Usar o modo CRÉDITO (funciona melhor), ou 2) Verificar se o número do cartão está correto e tentar novamente.')
+          throw new Error('Não foi possível processar como débito. Informe o código do banco emissor (issuer_id) do cartão e tente novamente.')
         }
         
         throw new Error(errorMsg)
@@ -534,6 +540,21 @@ export default function CheckoutPage() {
                     />
                   </div>
 
+                  {method === "debit" && (
+                    <div>
+                      <label style={{ fontSize: 12, color: "var(--color-muted-foreground)" }}>
+                        Código do banco emissor (issuer_id) *
+                      </label>
+                      <input
+                        value={manualIssuerId}
+                        onChange={(e) => setManualIssuerId(e.target.value)}
+                        placeholder="Ex: 25"
+                        style={inputStyle()}
+                        inputMode="numeric"
+                      />
+                    </div>
+                  )}
+
                   {method === "credit" && (
                     <div>
                       <label style={{ fontSize: 12, color: "var(--color-muted-foreground)" }}>Parcelas</label>
@@ -561,6 +582,7 @@ export default function CheckoutPage() {
                         setCardYear("")
                         setCardCvv("")
                         setCardholderDocument("")
+                        setManualIssuerId("")
                       }} 
                       style={secondaryButtonStyle()}
                     >
