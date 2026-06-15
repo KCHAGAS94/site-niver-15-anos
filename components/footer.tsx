@@ -1,4 +1,4 @@
-import { Heart, Instagram, Mail } from "lucide-react"
+import { Heart } from "lucide-react"
 
 export function Footer() {
   return (
@@ -13,24 +13,6 @@ export function Footer() {
           <span className="h-px w-16 bg-primary-foreground/30" />
           <Heart className="h-4 w-4 fill-current" />
           <span className="h-px w-16 bg-primary-foreground/30" />
-        </div>
-
-        {/* Social Links */}
-        <div className="flex items-center justify-center gap-4">
-          <a
-            href="#"
-            className="flex h-10 w-10 items-center justify-center rounded-full border border-primary-foreground/30 transition-all hover:bg-primary-foreground hover:text-primary"
-            aria-label="Instagram"
-          >
-            <Instagram className="h-5 w-5" />
-          </a>
-          <a
-            href="#"
-            className="flex h-10 w-10 items-center justify-center rounded-full border border-primary-foreground/30 transition-all hover:bg-primary-foreground hover:text-primary"
-            aria-label="Email"
-          >
-            <Mail className="h-5 w-5" />
-          </a>
         </div>
 
         {/* Copyright */}
