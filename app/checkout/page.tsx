@@ -50,6 +50,7 @@ export default function CheckoutPage() {
   }, [cardNumber])
 
   const [qr, setQr] = useState<string | null>(null)
+  const [pixCode, setPixCode] = useState<string | null>(null)
   const [message, setMessage] = useState<string | null>(null)
   const [paymentId, setPaymentId] = useState<string | number | null>(null)
   const [paymentStatus, setPaymentStatus] = useState<string | null>(null)
@@ -98,6 +99,7 @@ export default function CheckoutPage() {
 
   useEffect(() => {
     setQr(null)
+    setPixCode(null)
     setPaymentId(null)
     setPaymentStatus(null)
     setApprovalModalOpen(false)
@@ -109,6 +111,7 @@ export default function CheckoutPage() {
     setLoading(true)
     setMessage(null)
     setQr(null)
+    setPixCode(null)
     try {
       // reset validation
       setValidationErrors({})
@@ -143,7 +146,11 @@ export default function CheckoutPage() {
       const qrBase64 = data?.point_of_interaction?.transaction_data?.qr_code_base64
       const qrCode = data?.point_of_interaction?.transaction_data?.qr_code
       if (qrBase64) setQr(`data:image/png;base64,${qrBase64}`)
-      else if (qrCode) setMessage(String(qrCode))
+      if (qrCode) {
+        const code = String(qrCode)
+        setPixCode(code)
+        if (!qrBase64) setMessage(code)
+      }
       else setMessage((prev) => prev ?? "PIX criado, verifique retorno do servidor.")
     } catch (err: any) {
       setMessage(err?.message ?? String(err))
@@ -431,6 +438,41 @@ export default function CheckoutPage() {
             <div style={{ marginTop: 18, textAlign: "center" }}>
               <h3 style={{ color: "var(--color-primary)" }}>QR Code PIX</h3>
               <img src={qr} alt="PIX QR" style={{ maxWidth: 280, borderRadius: 8, border: "1px solid var(--color-border)" }} />
+              {pixCode && (
+                <div style={{ marginTop: 12, display: 'grid', gap: 10, justifyItems: 'center' }}>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      try {
+                        await navigator.clipboard.writeText(pixCode)
+                        setMessage('Código PIX copiado para a área de transferência.')
+                      } catch (error: any) {
+                        setMessage(error?.message ?? 'Não foi possível copiar o código PIX.')
+                      }
+                    }}
+                    style={primaryButtonStyle()}
+                  >
+                    Copiar código PIX
+                  </button>
+                  <textarea
+                    readOnly
+                    value={pixCode}
+                    style={{
+                      width: '100%',
+                      maxWidth: 560,
+                      minHeight: 110,
+                      padding: 12,
+                      borderRadius: 8,
+                      border: '1px solid var(--color-border)',
+                      background: 'var(--color-background)',
+                      color: 'var(--color-foreground)',
+                      fontSize: 12,
+                      lineHeight: 1.5,
+                      resize: 'none'
+                    }}
+                  />
+                </div>
+              )}
             </div>
           )}
 
