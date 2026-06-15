@@ -513,7 +513,7 @@ export default function CheckoutPage() {
           )}
 
           <Dialog open={approvalModalOpen} onOpenChange={setApprovalModalOpen}>
-            <DialogContent>
+            <DialogContent showCloseButton={false}>
               <DialogHeader>
                 <DialogTitle>Pagamento aprovado</DialogTitle>
                 <DialogDescription>
