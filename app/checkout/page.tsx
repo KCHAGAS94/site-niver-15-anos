@@ -8,8 +8,9 @@ import type { CSSProperties } from "react"
 export default function CheckoutPage() {
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
-  const [amount, setAmount] = useState("0.00")
-  const [method, setMethod] = useState<"pix" | "debit" | "credit">("pix")
+  const [amount, setAmount] = useState("1.00")
+  const [method, setMethod] = useState<"pix" | "credit">("pix")
+  const [selectedCount, setSelectedCount] = useState(0)
 
   // Card fields
   const [cardNumber, setCardNumber] = useState("")
@@ -62,12 +63,21 @@ export default function CheckoutPage() {
   useEffect(() => {
     try {
       const raw = sessionStorage.getItem("checkoutSelection")
-      if (raw) {
-        const parsed = JSON.parse(raw)
-        if (parsed?.total) setAmount(String(Number(parsed.total).toFixed(2)))
+      if (!raw) {
+        setAmount("1.00")
+        setSelectedCount(0)
+        return
       }
+
+      const parsed = JSON.parse(raw)
+      const total = Number(parsed?.total)
+      const items = Array.isArray(parsed?.items) ? parsed.items.length : 0
+
+      setAmount(Number.isFinite(total) && total > 0 ? total.toFixed(2) : "1.00")
+      setSelectedCount(items)
     } catch (e) {
-      // ignore
+      setAmount("1.00")
+      setSelectedCount(0)
     }
   }, [])
 
@@ -270,15 +280,16 @@ export default function CheckoutPage() {
                 {validationErrors.email && <div style={{ color: '#e11d48', fontSize: 12, marginTop: 6 }}>{validationErrors.email}</div>}
               </div>
               <div>
-                <label style={{ display: "block", fontSize: 12, color: "var(--color-muted-foreground)" }}>Valor (BRL)</label>
-                <input value={amount} onChange={(e) => setAmount(e.target.value)} style={inputStyle()} required />
+                <label style={{ display: "block", fontSize: 12, color: "var(--color-muted-foreground)" }}>
+                  Valor total a pagar {selectedCount > 0 && <span style={{ marginLeft: 6 }}>({selectedCount} presente{selectedCount > 1 ? "s" : ""})</span>}
+                </label>
+                <input value={formatBRL(amount)} disabled readOnly style={inputStyle()} required title="Valor fixo" />
               </div>
 
               <div style={{ display: "flex", flexDirection: "column", justifyContent: "center" }}>
                 <label style={{ fontSize: 12, color: "var(--color-muted-foreground)" }}>Método de pagamento</label>
                 <div style={{ display: "flex", gap: 12, marginTop: 8 }}>
                   <label style={{ display: "flex", gap: 6, alignItems: "center" }}><input type="radio" checked={method === "pix"} onChange={() => setMethod("pix")} /> Pix</label>
-                  <label style={{ display: "flex", gap: 6, alignItems: "center" }}><input type="radio" checked={method === "debit"} onChange={() => setMethod("debit")} /> Débito</label>
                   <label style={{ display: "flex", gap: 6, alignItems: "center" }}><input type="radio" checked={method === "credit"} onChange={() => setMethod("credit")} /> Crédito</label>
                 </div>
               </div>
@@ -303,11 +314,8 @@ export default function CheckoutPage() {
               </div>
             )}
 
-            {(method === "debit" || method === "credit") && (
+            {method === "credit" && (
               <div style={{ marginTop: 16 }}>
-                <div style={{ marginBottom: 12, fontSize: 13, color: "var(--color-muted-foreground)" }}>
-                  O formulário abaixo é automático. No crédito, o Mercado Pago vai mostrar as parcelas para o usuário escolher, de 1x até 3x.
-                </div>
 
                 <CardPayment
                   key={method}
@@ -328,9 +336,9 @@ export default function CheckoutPage() {
                   customization={{
                     paymentMethods: {
                       minInstallments: 1,
-                      maxInstallments: method === 'credit' ? 3 : 1,
+                      maxInstallments: 3,
                       types: {
-                        included: [method === 'debit' ? 'debit_card' : 'credit_card']
+                        included: ['credit_card']
                       }
                     },
                     visual: {
@@ -361,7 +369,7 @@ export default function CheckoutPage() {
                               }
                             : undefined
                         },
-                        card_mode: method,
+                        card_mode: 'credit',
                         payment_method_id: data.payment_method_id,
                         issuer_id: data.issuer_id,
                         description: 'Presente'
@@ -402,17 +410,10 @@ export default function CheckoutPage() {
                   }}
                 />
 
-                {process.env.NODE_ENV === 'development' && (
-                  <div style={{ marginTop: 8, padding: '10px 14px', background: 'rgba(251, 191, 36, 0.1)', borderRadius: 8, border: '1px solid rgba(251, 191, 36, 0.3)', fontSize: 11 }}>
-                    <strong>💳 Cartões de teste:</strong><br/>
-                    • Visa: 4509 9535 6623 3704<br/>
-                    • Master: 5031 4332 1540 6351<br/>
-                    • Use qualquer CVV (ex: 123) e data futura
-                  </div>
-                )}
+            
               </div>
             )}
-            { (method === 'debit' || method === 'credit') && !mpLoaded && (
+            {method === 'credit' && !mpLoaded && (
               <div style={{ marginTop: 8, fontSize: 13, color: 'var(--color-muted-foreground)' }}>
                 Aguardando carregamento do SDK do Mercado Pago. Aguarde alguns segundos e tente novamente.
               </div>
@@ -535,6 +536,16 @@ function secondaryButtonStyle(): CSSProperties {
     cursor: "pointer",
     fontSize: 14
   }
+}
+
+function formatBRL(value: string): string {
+  const numericValue = Number(value)
+  if (Number.isNaN(numericValue)) return "R$ 0,00"
+
+  return numericValue.toLocaleString("pt-BR", {
+    style: "currency",
+    currency: "BRL"
+  })
 }
 
 function statusTrackStyle(): CSSProperties {

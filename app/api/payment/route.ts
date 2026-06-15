@@ -34,14 +34,14 @@ export async function POST(req: Request) {
       return NextResponse.json(payment)
     }
 
-    if (payment_method === 'card' || payment_method === 'debit' || payment_method === 'credit') {
+    if (payment_method === 'card' || payment_method === 'credit') {
       if (!token) {
         return NextResponse.json({ error: 'card token required' }, { status: 400 })
       }
 
-      // for debit payments force 1 installment; credit is limited to 3 installments
+      // credit payments are limited to 3 installments
       const requestedInstallments = Number(body.installments || 1)
-      const installments = payment_method === 'debit' ? 1 : Math.min(Math.max(requestedInstallments, 1), 3)
+      const installments = Math.min(Math.max(requestedInstallments, 1), 3)
       
       // Determine payment_method_id
       let paymentMethodId = body.payment_method_id || body.card_brand
