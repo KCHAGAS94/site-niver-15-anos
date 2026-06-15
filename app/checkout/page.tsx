@@ -3,9 +3,11 @@ import { useEffect, useState, useRef } from "react"
 import { Navigation } from "@/components/navigation"
 import { CardPayment, initMercadoPago } from "@mercadopago/sdk-react"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { useRouter } from "next/navigation"
 import type { CSSProperties } from "react"
 
 export default function CheckoutPage() {
+  const router = useRouter()
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
   const [amount, setAmount] = useState("1.00")
@@ -59,6 +61,11 @@ export default function CheckoutPage() {
   const [loading, setLoading] = useState(false)
   const [mpLoaded, setMpLoaded] = useState(false)
   const messageRef = useRef<HTMLDivElement | null>(null)
+
+  const closeApprovalModal = () => {
+    setApprovalModalOpen(false)
+    router.push("/#inicio")
+  }
 
   useEffect(() => {
     try {
@@ -484,7 +491,7 @@ export default function CheckoutPage() {
               <DialogFooter>
                 <button
                   type="button"
-                  onClick={() => setApprovalModalOpen(false)}
+                  onClick={closeApprovalModal}
                   style={primaryButtonStyle()}
                 >
                   Fechar
