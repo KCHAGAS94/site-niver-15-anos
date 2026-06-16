@@ -10,6 +10,8 @@ export async function POST(request) {
     return NextResponse.json({ success: true, message: 'Presença confirmada com sucesso!' })
   } catch (error) {
     console.error('Erro ao salvar os dados:', error)
-    return NextResponse.json({ success: false, error: 'Erro interno ao salvar os dados.' }, { status: 500 })
+    const message = error instanceof Error ? error.message : 'Erro interno ao salvar os dados.'
+
+    return NextResponse.json({ success: false, error: message }, { status: 500 })
   }
 }
