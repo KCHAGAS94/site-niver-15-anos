@@ -1,0 +1,14 @@
+hg1urs2xY9bggOpgtLlW89YWYl
+
+
+cd /var/www/site-niver-15-anos
+git pull origin main
+npm ci
+npm run build
+pm2 restart site-niver-15-anos
+pm2 status
+
+--------------------------------------------------------
+
+
+
