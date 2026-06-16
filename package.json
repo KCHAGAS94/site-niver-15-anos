@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "rsvp:import": "node scripts/import-rsvp-json.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",
@@ -51,6 +52,7 @@
     "mercadopago": "^3.1.0",
     "next": "16.2.6",
     "next-themes": "^0.4.6",
+    "pg": "^8.21.0",
     "react": "^19",
     "react-day-picker": "9.13.2",
     "react-dom": "^19",
@@ -78,5 +80,6 @@
     "tailwindcss": "^4.2.0",
     "tw-animate-css": "1.3.3",
     "typescript": "5.7.3"
-  }
+  },
+  "packageManager": "pnpm@11.7.0+sha512.19cc852c120c7125760f2443ee6be0ca5b40f9f50598de1a09a1f177503e010e57c23c77646e01e761de59bf874fb22a3398c33ab9691fc13eb946b6f0f4d620"
 }
