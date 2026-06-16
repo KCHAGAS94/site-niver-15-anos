@@ -66,7 +66,7 @@ export function AboutSection() {
 
             <p className="mt-4 leading-relaxed text-muted-foreground">
               Esta festa marca o início de uma nova etapa, repleta de esperanças e 
-              possibilidades. Venha fazer parte desse momento tão especial!
+              possibilidades.
             </p>
 
             {/* Stats */}
@@ -83,7 +83,7 @@ export function AboutSection() {
               <div className="h-12 w-px bg-border" />
               <div className="text-center">
                 <span className="font-serif text-3xl text-primary">1</span>
-                <p className="mt-1 text-xs uppercase tracking-wider text-muted-foreground">Festa</p>
+                <p className="mt-1 text-xs uppercase tracking-wider text-muted-foreground">Capítulo</p>
               </div>
             </div>
           </div>
