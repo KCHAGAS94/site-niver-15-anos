@@ -308,17 +308,19 @@ export default function ConfirmadosClient({ confirmacoes = [] }) {
 										</div>
 										<div className="flex items-start justify-between gap-4 border-t border-slate-100 pt-3">
 											<dt className="font-medium text-slate-500">Acompanhantes</dt>
-											<dd className="text-right">
+											<dd className="mt-2 text-left text-slate-700">
 												{acompanhantes.length > 0 ? (
-													<ul className="space-y-1">
+													<ol className="space-y-1 pl-4">
 														{acompanhantes.map((acompanhante, index) => (
 															<li key={`${confirmacao.id}-mobile-${index}`}>
-																{acompanhante.nome || '-'} {acompanhante.idade ? `(${acompanhante.idade} anos)` : ''}
+																<span className="font-medium text-slate-700">{index + 1}.</span>{' '}
+																{String(acompanhante.nome || '-').toUpperCase()}{' '}
+																{acompanhante.idade ? `(${acompanhante.idade} anos)` : ''}
 															</li>
 														))}
-													</ul>
+													</ol>
 												) : (
-													'-'
+													<p className="text-slate-400">-</p>
 												)}
 											</dd>
 										</div>
