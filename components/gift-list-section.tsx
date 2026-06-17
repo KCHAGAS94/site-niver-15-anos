@@ -233,6 +233,7 @@ export function GiftListSection() {
                     src={gift.image}
                     alt={gift.name}
                     fill
+                    unoptimized={gift.name === "Câmera Fotográfica (Locação/Experiência)"}
                     className="object-cover transition-transform group-hover:scale-110"
                   />
                 </div>
