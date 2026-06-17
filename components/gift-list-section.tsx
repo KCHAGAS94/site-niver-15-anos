@@ -111,7 +111,7 @@ const giftList: GiftItem[] = [
     description: "Uma experiência especial para registrar momentos",
     price: 79.9,
     category: "Fotografia",
-    image: "/img/presente/Câmera Fotográfica.jpg",
+    image: "/img/presente/camera-fotografica.jpg",
   },
   {
     id: 13,
@@ -223,7 +223,7 @@ export function GiftListSection() {
                 )}
               >
                 {/* Category Badge */}
-                <span className="absolute right-4 top-4 rounded-full bg-secondary px-3 py-1 text-xs font-medium text-secondary-foreground">
+                <span className="absolute right-4 top-4 z-10 rounded-full bg-secondary px-3 py-1 text-xs font-medium text-secondary-foreground shadow-md">
                   {gift.category}
                 </span>
 
