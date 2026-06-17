@@ -19,147 +19,147 @@ interface GiftItem {
 const giftList: GiftItem[] = [
   {
     id: 1,
-    name: "1 Dia no Quiosque",
-    description: "Um dia relaxante no quiosque à beira-mar",
-    price: 1.00,
+    name: "Noite de Stand-up Comedy",
+    description: "Uma noite leve e divertida para dar boas risadas",
+    price: 99.9,
     category: "Lazer",
-    image: "/img/presente/1 dia no quiosque.jpg",
+    image: "/img/presente2/Noite de Stand-up Comedy.png",
   },
   {
     id: 2,
-    name: "3 Cotas para Hotel",
-    description: "Contribua com a hospedagem da viagem",
-    price: 1.00,
-    category: "Hospedagem",
-    image: "/img/presente/3 cotas para Hotel.jpg",
+    name: "Workshop de Automaquiagem",
+    description: "Experiência de beleza e técnicas de automaquiagem",
+    price: 69.9,
+    category: "Beleza",
+    image: "/img/presente2/Workshop de Automaquiagem.png",
   },
   {
     id: 3,
-    name: "4 Cotas Combustível",
-    description: "Ajude com o combustível para o carro",
-    price: 1.00,
-    category: "Transporte",
-    image: "/img/presente/4 cotas Combustível para o carro.jpg",
+    name: "Passeio no Shopping (Crédito/Experiência)",
+    description: "Um passeio com crédito para aproveitar como quiser",
+    price: 139.9,
+    category: "Experiência",
+    image: "/img/presente2/Passeio no Shopping.png",
   },
   {
     id: 4,
-    name: "4 Cotas Aluguel de Carro",
-    description: "Contribua com o aluguel do carro",
-    price: 1.00,
-    category: "Transporte",
-    image: "/img/presente/4 cotas para Aluguel de carro.jpg",
+    name: "Oficina de Culinária",
+    description: "Uma oficina para aprender e se divertir na cozinha",
+    price: 84.9,
+    category: "Gastronomia",
+    image: "/img/presente2/Oficina de Culinária.png",
   },
   {
     id: 5,
-    name: "Aulas de Surf",
-    description: "Aulas para aprender a surfar",
-    price: 1.00,
-    category: "Esporte",
-    image: "/img/presente/Aulas de surf.jpg",
+    name: "Ensaio Fotográfico",
+    description: "Uma experiência para registrar momentos especiais",
+    price: 179.9,
+    category: "Fotografia",
+    image: "/img/presente2/Ensaio Fotográfico.png",
   },
   {
     id: 6,
-    name: "Café da Manhã",
-    description: "Um delicioso café da manhã especial",
-    price: 1.00,
-    category: "Gastronomia",
-    image: "/img/presente/Café da manhã.jpg",
+    name: "Aula de Dança",
+    description: "Uma experiência animada para se movimentar e aprender",
+    price: 109.9,
+    category: "Lazer",
+    image: "/img/presente2/Aula de Dança.png",
   },
   {
     id: 7,
-    name: "Câmera Fotográfica",
-    description: "Para registrar todos os momentos",
-    price: 1.00,
-    category: "Fotografia",
-    image: "/img/presente/Câmera fotográfica.jpg",
+    name: "Tarde de Cinema",
+    description: "Uma tarde especial para aproveitar um bom filme",
+    price: 74.9,
+    category: "Lazer",
+    image: "/img/presente2/Tarde de Cinema.png",
   },
   {
     id: 8,
-    name: "Teatro Interativo",
-    description: "Ingresso para experiência teatral única",
-    price: 1.00,
-    category: "Cultura",
-    image: "/img/presente/Ingresso para o teatro interativo.jpg",
+    name: "Dia de Salão",
+    description: "Um dia completo de cuidados e beleza",
+    price: 159.9,
+    category: "Beleza",
+    image: "/img/presente2/Dia de Salão.png",
   },
   {
     id: 9,
-    name: "Ingressos para Festa",
-    description: "Ingressos para uma festa incrível",
-    price: 1.00,
-    category: "Lazer",
-    image: "/img/presente/Ingressos para uma festa.jpg",
+    name: "Vale-presente Restaurante",
+    description: "Um vale para uma refeição especial",
+    price: 124.9,
+    category: "Gastronomia",
+    image: "/img/presente2/Vale-presente Restaurante.jpg",
   },
   {
     id: 10,
-    name: "Parque de Diversões",
-    description: "Um dia cheio de diversão e aventura",
-    price: 1.00,
-    category: "Lazer",
-    image: "/img/presente/Parque de diversões.jpg",
+    name: "Workshop Design de Sobrancelhas",
+    description: "Experiência de design de sobrancelhas com estilo",
+    price: 94.9,
+    category: "Beleza",
+    image: "/img/presente2/Workshop Design de Sobrancelhas.png",
   },
   {
     id: 11,
-    name: "Passeio de Lancha",
-    description: "Aventura emocionante pelas águas",
-    price: 1.00,
-    category: "Passeio",
-    image: "/img/presente/Passeio de lancha.jpg",
+    name: "1 Dia de Hotel (Day Use)",
+    description: "Um dia especial de descanso e conforto",
+    price: 189.9,
+    category: "Hospedagem",
+    image: "/img/presente2/1 Dia de Hotel.jpg",
   },
   {
     id: 12,
-    name: "Seguro de Viagem",
-    description: "Proteção e tranquilidade na viagem",
-    price: 1.00,
-    category: "Segurança",
-    image: "/img/presente/Seguro de viagem.jpg",
+    name: "Câmera Fotográfica (Locação/Experiência)",
+    description: "Uma experiência especial para registrar momentos",
+    price: 79.9,
+    category: "Fotografia",
+    image: "/img/presente2/Câmera Fotográfica.jpg",
   },
   {
     id: 13,
-    name: "Show ou Concerto",
-    description: "Ingresso para show ao vivo",
-    price: 1.00,
-    category: "Cultura",
-    image: "/img/presente/Show ou concerto ao vivo.jpg",
+    name: "1 Dia de \"Sim\" dos Pais",
+    description: "Um dia para realizar desejos e viver experiências especiais",
+    price: 129.9,
+    category: "Experiência",
+    image: "/img/presente2/1 Dia de Sim dos Pais.png",
   },
   {
     id: 14,
-    name: "Traslado para Hotel",
-    description: "Transporte confortável até o hotel",
-    price: 1.00,
-    category: "Transporte",
-    image: "/img/presente/Traslado para o hotel.jpg",
+    name: "Dia de Spa",
+    description: "Relaxamento e cuidados pessoais",
+    price: 174.9,
+    category: "Bem-estar",
+    image: "/img/presente2/Dia de Spa.jpg",
   },
   {
     id: 15,
-    name: "Um Dia no Spa",
-    description: "Relaxamento e cuidados pessoais",
-    price: 1.00,
-    category: "Bem-estar",
-    image: "/img/presente/Um dia no spa.jpg",
+    name: "Sessão de Manicure",
+    description: "Um momento de autocuidado e beleza",
+    price: 89.9,
+    category: "Beleza",
+    image: "/img/presente2/Sessão de Manicure.png",
   },
   {
     id: 16,
-    name: "Vale-presente Restaurante",
-    description: "Para uma refeição especial",
-    price: 1.00,
+    name: "Rodízio de Japonês",
+    description: "Uma experiência gastronômica especial",
+    price: 149.9,
     category: "Gastronomia",
-    image: "/img/presente/Vale-presente para restaurante.jpg",
+    image: "/img/presente2/Rodízio de Japonês.png",
   },
   {
     id: 17,
-    name: "Visita a um Museu",
-    description: "Experiência cultural enriquecedora",
-    price: 1.00,
-    category: "Cultura",
-    image: "/img/presente/Visita a um museu.jpg",
+    name: "Passeio de Trilha",
+    description: "Um passeio ao ar livre para curtir a natureza",
+    price: 119.9,
+    category: "Passeio",
+    image: "/img/presente2/Passeio de Trilha.png",
   },
   {
     id: 18,
-    name: "Óculos de Sol",
-    description: "Estilo e proteção para os olhos",
-    price: 1.00,
-    category: "Acessório",
-    image: "/img/presente/Óculos de sol.jpg",
+    name: "Dia de Parque de Diversões",
+    description: "Um dia cheio de diversão e aventura",
+    price: 169.9,
+    category: "Lazer",
+    image: "/img/presente2/Dia de Parque de Diversões.jpg",
   },
 ]
 
@@ -218,7 +218,7 @@ export function GiftListSection() {
               <div
                 key={gift.id}
                 className={cn(
-                  "group relative overflow-hidden rounded-2xl bg-card p-6 shadow-lg transition-all duration-300 hover:shadow-xl",
+                  "group relative flex h-full flex-col overflow-hidden rounded-2xl bg-card p-6 shadow-lg transition-all duration-300 hover:shadow-xl",
                   isSelected && "ring-2 ring-primary"
                 )}
               >
@@ -228,7 +228,7 @@ export function GiftListSection() {
                 </span>
 
                 {/* Gift Image */}
-                <div className="mb-4 relative h-48 w-full overflow-hidden rounded-xl bg-gradient-to-br from-primary/10 to-accent/10">
+                <div className="relative mb-4 h-48 w-full overflow-hidden rounded-xl bg-gradient-to-br from-primary/10 to-accent/10">
                   <Image
                     src={gift.image}
                     alt={gift.name}
@@ -237,41 +237,45 @@ export function GiftListSection() {
                   />
                 </div>
 
-                {/* Gift Info */}
-                <h3 className="text-lg font-semibold text-card-foreground">
-                  {gift.name}
-                </h3>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  {gift.description}
-                </p>
+                <div className="flex flex-1 flex-col">
+                  {/* Gift Info */}
+                  <div className="flex-1">
+                    <h3 className="text-lg font-semibold text-card-foreground">
+                      {gift.name}
+                    </h3>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      {gift.description}
+                    </p>
+                  </div>
 
-                {/* Price */}
-                <p className="mt-4 font-serif text-2xl text-primary">
-                  {formatPrice(gift.price)}
-                </p>
+                  {/* Price */}
+                  <p className="mt-6 font-serif text-2xl text-primary">
+                    {formatPrice(gift.price)}
+                  </p>
 
-                {/* Action Button */}
-                <Button
-                  onClick={() => toggleGift(gift.id)}
-                  className={cn(
-                    "mt-4 w-full gap-2 transition-all",
-                    isSelected
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-secondary text-secondary-foreground hover:bg-primary hover:text-primary-foreground"
-                  )}
-                >
-                  {isSelected ? (
-                    <>
-                      <Check className="h-4 w-4" />
-                      Selecionado
-                    </>
-                  ) : (
-                    <>
-                      <Heart className="h-4 w-4" />
-                      Presentear
-                    </>
-                  )}
-                </Button>
+                  {/* Action Button */}
+                  <Button
+                    onClick={() => toggleGift(gift.id)}
+                    className={cn(
+                      "mt-4 w-full gap-2 transition-all",
+                      isSelected
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-secondary text-secondary-foreground hover:bg-primary hover:text-primary-foreground"
+                    )}
+                  >
+                    {isSelected ? (
+                      <>
+                        <Check className="h-4 w-4" />
+                        Selecionado
+                      </>
+                    ) : (
+                      <>
+                        <Heart className="h-4 w-4" />
+                        Presentear
+                      </>
+                    )}
+                  </Button>
+                </div>
               </div>
             )
           })}
