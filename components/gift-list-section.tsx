@@ -161,6 +161,14 @@ const giftList: GiftItem[] = [
     category: "Lazer",
     image: "/img/presente/Dia de Parque de Diversões.jpg",
   },
+  {
+    id: 19,
+    name: "Teste de Pagamento",
+    description: "Item para validação de chave de pagamento",
+    price: 1.0,
+    category: "Teste",
+    image: "/img/presente/Dia de Parque de Diversões.jpg",
+  },
 ]
 
 export function GiftListSection() {
