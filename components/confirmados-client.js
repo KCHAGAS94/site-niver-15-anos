@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react'
 import * as XLSX from 'xlsx'
+import { AdminPagesHeader } from '@/components/admin-pages-header'
 
 function formatDate(value) {
 	if (!value) return '-'
@@ -122,8 +123,10 @@ export default function ConfirmadosClient({ confirmacoes = [] }) {
 	}
 
 	return (
-		<main className="min-h-screen bg-slate-50 px-4 py-10 md:py-16">
+		<main className="min-h-screen bg-slate-50 px-4 py-24 md:py-28">
 			<div className="mx-auto w-full max-w-7xl">
+				<AdminPagesHeader />
+
 				<div className="mb-8 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
 					<div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
 						<div>
