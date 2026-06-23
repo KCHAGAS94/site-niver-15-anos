@@ -303,8 +303,28 @@ export default function CheckoutPage() {
               <div style={{ display: "flex", flexDirection: "column", justifyContent: "center" }}>
                 <label style={{ fontSize: 12, color: "var(--color-muted-foreground)" }}>Método de pagamento</label>
                 <div style={{ display: "flex", gap: 12, marginTop: 8 }}>
-                  <label style={{ display: "flex", gap: 6, alignItems: "center" }}><input type="radio" checked={method === "pix"} onChange={() => setMethod("pix")} /> Pix</label>
-                  <label style={{ display: "flex", gap: 6, alignItems: "center" }}><input type="radio" checked={method === "credit"} onChange={() => setMethod("credit")} /> Crédito</label>
+                  <label style={{ ...paymentMethodOptionStyle(method === "pix"), flex: 1 }}>
+                    <input
+                      type="radio"
+                      name="payment-method"
+                      checked={method === "pix"}
+                      onChange={() => setMethod("pix")}
+                      style={{ position: "absolute", opacity: 0, width: 0, height: 0 }}
+                    />
+                    <span style={{ fontSize: 20, lineHeight: 1 }}>◈</span>
+                    <span>Pix</span>
+                  </label>
+                  <label style={{ ...paymentMethodOptionStyle(method === "credit"), flex: 1 }}>
+                    <input
+                      type="radio"
+                      name="payment-method"
+                      checked={method === "credit"}
+                      onChange={() => setMethod("credit")}
+                      style={{ position: "absolute", opacity: 0, width: 0, height: 0 }}
+                    />
+                    <span style={{ fontSize: 20, lineHeight: 1 }}>▣</span>
+                    <span>Cartão</span>
+                  </label>
                 </div>
               </div>
             </div>
@@ -435,9 +455,9 @@ export default function CheckoutPage() {
           </form>
 
           {method === 'pix' && qr && (
-            <div style={{ marginTop: 18, textAlign: "center" }}>
+            <div style={{ marginTop: 18, display: 'grid', justifyItems: 'center', textAlign: "center" }}>
               <h3 style={{ color: "var(--color-primary)" }}>QR Code PIX</h3>
-              <img src={qr} alt="PIX QR" style={{ maxWidth: 280, borderRadius: 8, border: "1px solid var(--color-border)" }} />
+              <img src={qr} alt="PIX QR" style={{ maxWidth: 280, borderRadius: 8, border: "1px solid var(--color-border)", display: 'block', margin: '0 auto' }} />
               {pixCode && (
                 <div style={{ marginTop: 12, display: 'grid', gap: 10, justifyItems: 'center' }}>
                   <button
@@ -454,23 +474,6 @@ export default function CheckoutPage() {
                   >
                     Copiar código PIX
                   </button>
-                  <textarea
-                    readOnly
-                    value={pixCode}
-                    style={{
-                      width: '100%',
-                      maxWidth: 560,
-                      minHeight: 110,
-                      padding: 12,
-                      borderRadius: 8,
-                      border: '1px solid var(--color-border)',
-                      background: 'var(--color-background)',
-                      color: 'var(--color-foreground)',
-                      fontSize: 12,
-                      lineHeight: 1.5,
-                      resize: 'none'
-                    }}
-                  />
                 </div>
               )}
             </div>
@@ -571,6 +574,27 @@ function primaryButtonStyle(): CSSProperties {
     fontWeight: 600,
     cursor: "pointer",
     fontSize: 14
+  }
+}
+
+function paymentMethodOptionStyle(selected: boolean): CSSProperties {
+  return {
+    position: "relative",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 10,
+    minHeight: 44,
+    padding: "10px 14px",
+    borderRadius: 8,
+    border: selected ? "2px solid var(--color-primary)" : "1px solid var(--color-border)",
+    background: "var(--color-card)",
+    color: selected ? "var(--color-primary)" : "var(--color-foreground)",
+    fontSize: 14,
+    fontWeight: 600,
+    cursor: "pointer",
+    boxShadow: selected ? "0 0 0 3px color-mix(in srgb, var(--color-primary) 18%, transparent)" : "0 4px 12px rgba(0,0,0,0.05)",
+    transition: "all 0.2s ease"
   }
 }
 
