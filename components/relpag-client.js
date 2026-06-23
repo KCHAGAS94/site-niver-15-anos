@@ -119,6 +119,7 @@ export default function RelpagClient({ eventos = [] }) {
   const totais = useMemo(() => {
     return eventosState.reduce(
       (accumulator, evento) => {
+        const valor = Number(evento.valor) || 0
         const metodo = String(evento.metodo || '').toLowerCase()
         const resultado = String(evento.resultado || '').toLowerCase()
         const status = String(evento.status || '').toLowerCase()
@@ -126,15 +127,15 @@ export default function RelpagClient({ eventos = [] }) {
         const aguardando = status === 'pending' || resultado === 'pix_gerado' || resultado === 'processado' || resultado === 'aguardando_pagamento' || status === 'in_process'
 
         if (metodo === 'pix' && aprovado) {
-          accumulator.aprovadoPix += 1
+          accumulator.aprovadoPix += valor
         }
 
         if ((metodo === 'credit' || metodo === 'card') && aprovado) {
-          accumulator.aprovadoCredito += 1
+          accumulator.aprovadoCredito += valor
         }
 
         if (aguardando) {
-          accumulator.aguardandoPagamento += 1
+          accumulator.aguardandoPagamento += valor
         }
 
         return accumulator
@@ -169,15 +170,15 @@ export default function RelpagClient({ eventos = [] }) {
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
               <div className="rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-center">
                 <div className="text-xs font-semibold uppercase tracking-wide text-emerald-500">Aprovado PIX</div>
-                <div className="mt-1 text-2xl font-bold text-emerald-700">{totais.aprovadoPix}</div>
+                <div className="mt-1 text-xl font-bold text-emerald-700">{formatCurrency(totais.aprovadoPix)}</div>
               </div>
               <div className="rounded-2xl border border-sky-100 bg-sky-50 px-4 py-3 text-center">
                 <div className="text-xs font-semibold uppercase tracking-wide text-sky-500">Aprovado Crédito</div>
-                <div className="mt-1 text-2xl font-bold text-sky-700">{totais.aprovadoCredito}</div>
+                <div className="mt-1 text-xl font-bold text-sky-700">{formatCurrency(totais.aprovadoCredito)}</div>
               </div>
               <div className="rounded-2xl border border-amber-100 bg-amber-50 px-4 py-3 text-center">
                 <div className="text-xs font-semibold uppercase tracking-wide text-amber-500">Aguardando pagamento</div>
-                <div className="mt-1 text-2xl font-bold text-amber-700">{totais.aguardandoPagamento}</div>
+                <div className="mt-1 text-xl font-bold text-amber-700">{formatCurrency(totais.aguardandoPagamento)}</div>
               </div>
             </div>
           </div>
