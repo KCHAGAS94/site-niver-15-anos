@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
+import { Trash2 } from 'lucide-react'
 import { AdminPagesHeader } from '@/components/admin-pages-header'
 
 function formatDate(value) {
@@ -36,7 +37,9 @@ function getResultBadgeClass(resultado) {
 }
 
 export default function RelpagClient({ eventos = [] }) {
+  const [eventosState, setEventosState] = useState(eventos)
   const [search, setSearch] = useState('')
+  const [deletingId, setDeletingId] = useState(null)
   const [desktopFilters, setDesktopFilters] = useState({
     nome: '',
     email: '',
@@ -53,6 +56,33 @@ export default function RelpagClient({ eventos = [] }) {
     }))
   }
 
+  const handleDelete = async (id) => {
+    if (!id || deletingId) return
+
+    const confirmed = window.confirm('Deseja excluir este registro do relatório?')
+    if (!confirmed) return
+
+    setDeletingId(id)
+
+    try {
+      const response = await fetch(`/api/payment/events/${id}`, {
+        method: 'DELETE'
+      })
+
+      const data = await response.json()
+      if (!response.ok) {
+        throw new Error(data?.error || 'Não foi possível excluir o registro.')
+      }
+
+      setEventosState((current) => current.filter((evento) => evento.id !== id))
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Não foi possível excluir o registro.'
+      window.alert(message)
+    } finally {
+      setDeletingId(null)
+    }
+  }
+
   const eventosFiltrados = useMemo(() => {
     const termo = search.trim().toLowerCase()
     const filtros = {
@@ -64,7 +94,7 @@ export default function RelpagClient({ eventos = [] }) {
       data: desktopFilters.data.trim().toLowerCase()
     }
 
-    return eventos.filter((evento) => {
+    return eventosState.filter((evento) => {
       const nome = String(evento.nome || '').toLowerCase()
       const email = String(evento.email || '').toLowerCase()
       const metodo = String(evento.metodo || '').toLowerCase()
@@ -83,10 +113,10 @@ export default function RelpagClient({ eventos = [] }) {
 
       return matchBusca && matchNome && matchEmail && matchMetodo && matchResultado && matchStatus && matchData
     })
-  }, [desktopFilters, eventos, search])
+  }, [desktopFilters, eventosState, search])
 
   const totais = useMemo(() => {
-    return eventos.reduce(
+    return eventosState.reduce(
       (accumulator, evento) => {
         const metodo = String(evento.metodo || '').toLowerCase()
         const resultado = String(evento.resultado || '').toLowerCase()
@@ -110,7 +140,7 @@ export default function RelpagClient({ eventos = [] }) {
       },
       { aprovadoPix: 0, aprovadoCredito: 0, aguardandoPagamento: 0 }
     )
-  }, [eventos])
+  }, [eventosState])
 
   return (
     <main className="min-h-screen bg-slate-50 px-4 py-24 md:py-28">
@@ -165,6 +195,7 @@ export default function RelpagClient({ eventos = [] }) {
                   <th className="px-6 py-4 text-xs font-bold uppercase tracking-[0.18em] text-slate-500">Status</th>
                   <th className="px-6 py-4 text-xs font-bold uppercase tracking-[0.18em] text-slate-500">Erro</th>
                   <th className="px-6 py-4 text-xs font-bold uppercase tracking-[0.18em] text-slate-500">Data</th>
+                  <th className="px-6 py-4 text-xs font-bold uppercase tracking-[0.18em] text-slate-500">Ação</th>
                 </tr>
                 <tr className="border-t border-slate-200 bg-white">
                   <th className="px-4 py-3">
@@ -223,12 +254,13 @@ export default function RelpagClient({ eventos = [] }) {
                       className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700 outline-none transition focus:border-pink-300 focus:bg-white focus:ring-2 focus:ring-pink-100"
                     />
                   </th>
+                  <th className="px-4 py-3" />
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 bg-white">
                 {eventosFiltrados.length === 0 ? (
                   <tr>
-                    <td colSpan={8} className="px-6 py-10 text-center text-slate-500">
+                    <td colSpan={9} className="px-6 py-10 text-center text-slate-500">
                       {search.trim() ? 'Nenhum registro encontrado.' : 'Nenhum evento de pagamento registrado ainda.'}
                     </td>
                   </tr>
@@ -249,6 +281,18 @@ export default function RelpagClient({ eventos = [] }) {
                       <td className="px-6 py-4 text-slate-600">{evento.status || '-'}</td>
                       <td className="max-w-xs px-6 py-4 text-slate-600">{evento.erroMensagem || '-'}</td>
                       <td className="px-6 py-4 text-slate-600">{formatDate(evento.dataEvento)}</td>
+                      <td className="px-6 py-4">
+                        <button
+                          type="button"
+                          onClick={() => handleDelete(evento.id)}
+                          disabled={deletingId === evento.id}
+                          className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-rose-200 bg-rose-50 text-rose-600 transition hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-60"
+                          aria-label="Excluir registro"
+                          title="Excluir registro"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </td>
                     </tr>
                   ))
                 )}
@@ -270,9 +314,21 @@ export default function RelpagClient({ eventos = [] }) {
                     <h2 className="text-lg font-bold text-slate-800">{evento.nome || '-'}</h2>
                     <p className="mt-1 text-sm text-slate-500">{evento.email || '-'}</p>
                   </div>
-                  <span className={`inline-flex rounded-full px-3 py-1 text-xs font-bold ${getResultBadgeClass(evento.resultado)}`}>
-                    {evento.resultado || '-'}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className={`inline-flex rounded-full px-3 py-1 text-xs font-bold ${getResultBadgeClass(evento.resultado)}`}>
+                      {evento.resultado || '-'}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => handleDelete(evento.id)}
+                      disabled={deletingId === evento.id}
+                      className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-rose-200 bg-rose-50 text-rose-600 transition hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-60"
+                      aria-label="Excluir registro"
+                      title="Excluir registro"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
                 </div>
 
                 <dl className="mt-4 grid gap-3 text-sm text-slate-600">
