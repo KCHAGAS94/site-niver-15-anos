@@ -30,8 +30,9 @@ function getResultBadgeClass(resultado) {
   const value = String(resultado || '').toLowerCase()
 
   if (value === 'aprovado') return 'bg-emerald-100 text-emerald-700'
-  if (value.includes('erro')) return 'bg-rose-100 text-rose-700'
+  if (value === 'reprovado' || value.includes('erro')) return 'bg-rose-100 text-rose-700'
   if (value.includes('pix')) return 'bg-sky-100 text-sky-700'
+  if (value.includes('aguardando')) return 'bg-amber-100 text-amber-700'
 
   return 'bg-amber-100 text-amber-700'
 }
@@ -122,7 +123,7 @@ export default function RelpagClient({ eventos = [] }) {
         const resultado = String(evento.resultado || '').toLowerCase()
         const status = String(evento.status || '').toLowerCase()
         const aprovado = resultado === 'aprovado' || status === 'approved' || status === 'paid'
-        const aguardando = status === 'pending' || resultado === 'pix_gerado' || resultado === 'processado'
+        const aguardando = status === 'pending' || resultado === 'pix_gerado' || resultado === 'processado' || resultado === 'aguardando_pagamento' || status === 'in_process'
 
         if (metodo === 'pix' && aprovado) {
           accumulator.aprovadoPix += 1
