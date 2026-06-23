@@ -487,11 +487,11 @@ export default function CheckoutPage() {
                   <div style={{ fontWeight: 600, color: paymentStatus && (paymentStatus === 'approved' || paymentStatus === 'paid') ? 'var(--color-success)' : 'var(--color-primary)' }}>
                     {paymentStatus && (paymentStatus === 'approved' || paymentStatus === 'paid') ? 'Compra aprovada' : 'Aguardando pagamento'}
                   </div>
-                  <div style={{ fontSize: 13, color: 'var(--color-muted-foreground)', marginTop: 6, maxWidth: 560 }}>
-                    {paymentStatus && (paymentStatus === 'approved' || paymentStatus === 'paid')
-                      ? 'O pagamento foi confirmado com sucesso.'
-                      : 'Aguardando pagamento — você pode fechar a janela quando quiser. Assim que o pagamento for confirmado, a compra será aprovada aqui.'}
-                  </div>
+                  {paymentStatus && (paymentStatus === 'approved' || paymentStatus === 'paid') && (
+                    <div style={{ fontSize: 13, color: 'var(--color-muted-foreground)', marginTop: 6, maxWidth: 560 }}>
+                      O pagamento foi confirmado com sucesso.
+                    </div>
+                  )}
                 </div>
                 <div style={{ textAlign: 'right', minWidth: 120 }}>
                   <div style={{ fontSize: 12, color: 'var(--color-muted-foreground)' }}>Status</div>
