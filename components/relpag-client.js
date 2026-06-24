@@ -101,10 +101,9 @@ export default function RelpagClient({ eventos = [] }) {
       const metodo = String(evento.metodo || '').toLowerCase()
       const resultado = String(evento.resultado || '').toLowerCase()
       const status = String(evento.status || '').toLowerCase()
-      const erroMensagem = String(evento.erroMensagem || '').toLowerCase()
       const data = formatDate(evento.dataEvento).toLowerCase()
 
-      const matchBusca = !termo || nome.includes(termo) || email.includes(termo) || erroMensagem.includes(termo)
+      const matchBusca = !termo || nome.includes(termo) || email.includes(termo)
       const matchNome = !filtros.nome || nome.includes(filtros.nome)
       const matchEmail = !filtros.email || email.includes(filtros.email)
       const matchMetodo = !filtros.metodo || metodo.includes(filtros.metodo)
@@ -162,7 +161,7 @@ export default function RelpagClient({ eventos = [] }) {
                 type="search"
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
-                placeholder="Nome, e-mail ou erro"
+                placeholder="Nome, e-mail"
                 className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-800 outline-none transition focus:border-pink-300 focus:bg-white focus:ring-2 focus:ring-pink-100"
               />
             </div>
@@ -195,7 +194,6 @@ export default function RelpagClient({ eventos = [] }) {
                   <th className="px-6 py-4 text-xs font-bold uppercase tracking-[0.18em] text-slate-500">Valor</th>
                   <th className="px-6 py-4 text-xs font-bold uppercase tracking-[0.18em] text-slate-500">Resultado</th>
                   <th className="px-6 py-4 text-xs font-bold uppercase tracking-[0.18em] text-slate-500">Status</th>
-                  <th className="px-6 py-4 text-xs font-bold uppercase tracking-[0.18em] text-slate-500">Erro</th>
                   <th className="px-6 py-4 text-xs font-bold uppercase tracking-[0.18em] text-slate-500">Data</th>
                   <th className="px-6 py-4 text-xs font-bold uppercase tracking-[0.18em] text-slate-500">Ação</th>
                 </tr>
@@ -246,7 +244,6 @@ export default function RelpagClient({ eventos = [] }) {
                       className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700 outline-none transition focus:border-pink-300 focus:bg-white focus:ring-2 focus:ring-pink-100"
                     />
                   </th>
-                  <th className="px-4 py-3" />
                   <th className="px-4 py-3">
                     <input
                       type="text"
@@ -262,7 +259,7 @@ export default function RelpagClient({ eventos = [] }) {
               <tbody className="divide-y divide-slate-100 bg-white">
                 {eventosFiltrados.length === 0 ? (
                   <tr>
-                    <td colSpan={9} className="px-6 py-10 text-center text-slate-500">
+                    <td colSpan={8} className="px-6 py-10 text-center text-slate-500">
                       {search.trim() ? 'Nenhum registro encontrado.' : 'Nenhum evento de pagamento registrado ainda.'}
                     </td>
                   </tr>
@@ -281,7 +278,6 @@ export default function RelpagClient({ eventos = [] }) {
                         </span>
                       </td>
                       <td className="px-6 py-4 text-slate-600">{evento.status || '-'}</td>
-                      <td className="max-w-xs px-6 py-4 text-slate-600">{evento.erroMensagem || '-'}</td>
                       <td className="px-6 py-4 text-slate-600">{formatDate(evento.dataEvento)}</td>
                       <td className="px-6 py-4">
                         <button
@@ -346,10 +342,7 @@ export default function RelpagClient({ eventos = [] }) {
                     <dt className="font-medium text-slate-500">Status</dt>
                     <dd>{evento.status || '-'}</dd>
                   </div>
-                  <div className="flex items-start justify-between gap-4 border-t border-slate-100 pt-3">
-                    <dt className="font-medium text-slate-500">Erro</dt>
-                    <dd className="max-w-[70%] text-right">{evento.erroMensagem || '-'}</dd>
-                  </div>
+                  
                   <div className="flex items-center justify-between gap-4 border-t border-slate-100 pt-3">
                     <dt className="font-medium text-slate-500">Data</dt>
                     <dd>{formatDate(evento.dataEvento)}</dd>
