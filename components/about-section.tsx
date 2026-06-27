@@ -2,7 +2,12 @@
 
 import { Heart, Star, Sparkles } from "lucide-react"
 
+import { useContext } from "react"
+import { ImageSequenceContext } from "./sequential-image-provider"
+
 export function AboutSection() {
+  const { aboutLoaded } = useContext(ImageSequenceContext)
+
   return (
     <section id="sobre" className="relative py-20 md:py-32">
       {/* Decorative background */}
@@ -30,8 +35,8 @@ export function AboutSection() {
         {/* Content Grid */}
         <div className="mx-auto grid max-w-5xl gap-12 md:grid-cols-2 md:items-center">
           {/* Foto da Vitória */}
-          <div className="relative mx-auto w-full max-w-sm">
-            <div className="aspect-[3/4] overflow-hidden rounded-2xl bg-gradient-to-br from-primary/20 to-accent/20 shadow-2xl">
+            <div className="relative mx-auto w-full max-w-sm">
+            <div className={`aspect-[3/4] overflow-hidden rounded-2xl bg-gradient-to-br from-primary/20 to-accent/20 shadow-2xl transition-opacity duration-700 ${aboutLoaded ? 'opacity-100' : 'opacity-0'}`}>
               <img 
                 src="/img/vitoria/vitoria (12).jpeg"
                 alt="Foto da Vitória"

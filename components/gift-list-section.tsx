@@ -1,11 +1,13 @@
 "use client"
 
 import { useState } from "react"
+import { useContext } from "react"
 import { useRouter } from 'next/navigation'
 import { Gift, Heart, ExternalLink, Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import Image from "next/image"
+import { ImageSequenceContext } from "./sequential-image-provider"
 
 interface GiftItem {
   id: number
@@ -174,6 +176,7 @@ const giftList: GiftItem[] = [
 export function GiftListSection() {
   const [selectedGifts, setSelectedGifts] = useState<number[]>([])
   const router = useRouter()
+  const { giftLoadedCount } = useContext(ImageSequenceContext)
 
   const toggleGift = (id: number) => {
     setSelectedGifts((prev) => {
@@ -220,7 +223,7 @@ export function GiftListSection() {
 
         {/* Gift Grid */}
         <div className="mx-auto grid max-w-6xl gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {giftList.map((gift) => {
+          {giftList.map((gift, idx) => {
             const isSelected = selectedGifts.includes(gift.id)
             return (
               <div
@@ -237,6 +240,7 @@ export function GiftListSection() {
 
                 {/* Gift Image */}
                 <div className="relative mb-4 h-48 w-full overflow-hidden rounded-xl bg-gradient-to-br from-primary/10 to-accent/10">
+                  {giftLoadedCount >= idx + 1 ? (
                   <Image
                     src={gift.image}
                     alt={gift.name}
@@ -244,6 +248,15 @@ export function GiftListSection() {
                     unoptimized={gift.name === "Câmera Fotográfica (Locação/Experiência)"}
                     className="object-cover transition-transform group-hover:scale-110"
                   />
+                  ) : (
+                    <div className="absolute inset-0 flex items-center justify-center bg-muted/20">
+                      <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-primary/60" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3v18h18" />
+                        </svg>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex flex-1 flex-col">

@@ -1,7 +1,8 @@
 "use client"
 
 
-import { useRef } from "react"
+import { useRef, useContext } from "react"
+import { ImageSequenceContext } from "./sequential-image-provider"
 import { Swiper, SwiperSlide } from "swiper/react"
 import { Navigation, Pagination, Autoplay } from "swiper/modules"
 import "swiper/css"
@@ -26,6 +27,8 @@ const galleryImages = [
 
 export function GallerySection() {
   const swiperRef = useRef(null)
+  const { galleryLoaded, galleryLoadedCount } = useContext(ImageSequenceContext)
+  const visibleImages = galleryLoadedCount > 0 ? galleryImages.slice(0, galleryLoadedCount) : []
   return (
     <section id="galeria" className="relative bg-muted/50 py-20 md:py-32">
       <div className="container mx-auto px-4">
@@ -45,7 +48,13 @@ export function GallerySection() {
         </div>
 
         {/* Carousel Swiper */}
-        <Swiper
+        <div className={`transition-opacity duration-700 ${galleryLoaded ? 'opacity-100' : galleryLoadedCount > 0 ? 'opacity-100' : 'opacity-0'}`}>
+        {visibleImages.length === 0 ? (
+          <div className="w-full max-w-[400px] mx-auto aspect-[3/4] rounded-2xl bg-card flex items-center justify-center">
+            <Camera className="h-10 w-10 text-primary/60" />
+          </div>
+        ) : (
+          <Swiper
           ref={swiperRef}
           modules={[Navigation, Pagination, Autoplay]}
           spaceBetween={24}
@@ -60,7 +69,7 @@ export function GallerySection() {
           pagination={{ clickable: true, el: '.swiper-pagination' }}
           className="w-full max-w-[400px] mx-auto"
         >
-          {galleryImages.map((image, idx) => (
+          {visibleImages.map((image, idx) => (
             <SwiperSlide key={image.src + '-' + idx}>
               <div className="aspect-[3/4] overflow-hidden rounded-2xl bg-card shadow-lg">
                 <img
@@ -90,6 +99,8 @@ export function GallerySection() {
           {/* Dots Indicator */}
           <div className="swiper-pagination mt-8 flex items-center justify-center gap-2" />
         </Swiper>
+        )}
+        </div>
       </div>
     </section>
   )

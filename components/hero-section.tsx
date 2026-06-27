@@ -2,14 +2,19 @@
 
 import { ChevronDown } from "lucide-react"
 
+import { useContext } from "react"
+import { ImageSequenceContext } from "./sequential-image-provider"
+
 export function HeroSection() {
+  const { heroLoaded } = useContext(ImageSequenceContext)
+
   return (
     <section className="relative h-screen w-full overflow-hidden">
       {/* Background Image da aniversariante */}
       {/* Background Image da aniversariante */}
       <div className="absolute inset-0">
         <div
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-80"
+          className={`absolute inset-0 bg-cover bg-center bg-no-repeat transition-opacity duration-700 ${heroLoaded ? 'opacity-80' : 'opacity-0'}`}
           style={{ backgroundImage: "url('/img/vitoria/vitoria (8).jpeg')" }}
         />
         <div className="absolute inset-0 bg-black/60" />

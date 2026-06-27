@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Poppins, Great_Vibes } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import './globals.css'
+import { SequentialImageProvider } from '@/components/sequential-image-provider'
 
 const poppins = Poppins({
   subsets: ['latin'],
@@ -32,7 +33,9 @@ export default function RootLayout({
   return (
     <html lang="pt-BR" className="bg-background">
       <body className={`${poppins.variable} ${greatVibes.variable} font-sans antialiased`}>
-        {children}
+        <SequentialImageProvider>
+          {children}
+        </SequentialImageProvider>
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
     </html>
