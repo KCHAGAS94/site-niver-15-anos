@@ -552,13 +552,29 @@ export default function CheckoutPage() {
           )}
 
           <Dialog open={approvalModalOpen} onOpenChange={setApprovalModalOpen}>
-            <DialogContent showCloseButton={false}>
-              <DialogHeader>
-                <DialogTitle>Pagamento aprovado</DialogTitle>
-                <DialogDescription>
-                  A compra foi confirmada com sucesso. Você pode fechar esta janela e continuar navegando.
-                </DialogDescription>
-              </DialogHeader>
+            <DialogContent
+              showCloseButton={false}
+              style={{
+                position: 'fixed',
+                inset: 0,
+                width: '100vw',
+                height: '100vh',
+                margin: 0,
+                padding: 0,
+                display: 'grid',
+                placeItems: 'center',
+                boxSizing: 'border-box',
+                overflow: 'auto',
+                background: 'rgba(0,0,0,0.45)'
+              }}
+            >
+              <div style={{ width: '100%', maxWidth: 560, margin: 0 }}>
+                <DialogHeader>
+                  <DialogTitle>Pagamento aprovado</DialogTitle>
+                  <DialogDescription>
+                    A compra foi confirmada com sucesso. Você pode fechar esta janela e continuar navegando.
+                  </DialogDescription>
+                </DialogHeader>
 
               <div style={{ display: 'grid', gap: 10, fontSize: 14, color: 'var(--color-foreground)' }}>
                 <div style={{ padding: '12px 14px', borderRadius: 8, background: 'rgba(34, 197, 94, 0.10)', border: '1px solid rgba(34, 197, 94, 0.25)' }}>
@@ -578,7 +594,8 @@ export default function CheckoutPage() {
                   Fechar
                 </button>
               </DialogFooter>
-            </DialogContent>
+            </div>
+          </DialogContent>
           </Dialog>
 
           <Dialog
@@ -591,19 +608,17 @@ export default function CheckoutPage() {
             <DialogContent
               showCloseButton={creditDialogState !== 'processing'}
               style={{
+                position: 'fixed',
+                inset: 0,
                 width: '100vw',
                 height: '100vh',
-                maxWidth: '100vw',
-                maxHeight: '100vh',
-                top: 0,
-                left: 0,
-                transform: 'none',
-                borderRadius: 0,
+                margin: 0,
                 padding: 0,
                 display: 'grid',
                 placeItems: 'center',
                 boxSizing: 'border-box',
-                overflow: 'auto'
+                overflow: 'auto',
+                background: 'rgba(0,0,0,0.45)'
               }}
             >
               <div style={{
@@ -617,7 +632,7 @@ export default function CheckoutPage() {
                 display: 'grid',
                 gap: 24,
                 textAlign: 'center',
-                margin: '0 auto'
+                margin: 0
               }}>
                   <DialogHeader>
                     <DialogTitle>
