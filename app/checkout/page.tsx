@@ -565,7 +565,8 @@ export default function CheckoutPage() {
                 placeItems: 'center',
                 boxSizing: 'border-box',
                 overflow: 'auto',
-                background: 'rgba(0,0,0,0.45)'
+                background: 'rgba(0,0,0,0.45)',
+                transform: 'none'
               }}
             >
               <div style={{ width: '100%', maxWidth: 560, margin: 0 }}>
@@ -618,7 +619,8 @@ export default function CheckoutPage() {
                 placeItems: 'center',
                 boxSizing: 'border-box',
                 overflow: 'auto',
-                background: 'rgba(0,0,0,0.45)'
+                background: 'rgba(0,0,0,0.45)',
+                transform: 'none'
               }}
             >
               <div style={{
