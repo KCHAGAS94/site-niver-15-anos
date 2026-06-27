@@ -33,7 +33,7 @@ export function AboutSection() {
           <div className="relative mx-auto w-full max-w-sm">
             <div className="aspect-[3/4] overflow-hidden rounded-2xl bg-gradient-to-br from-primary/20 to-accent/20 shadow-2xl">
               <img 
-                src="/img/foto1.png"
+                src="/img/vitoria/vitoria (12).jpeg"
                 alt="Foto da Vitória"
                 className="h-full w-full object-cover object-top"
                 loading="lazy"

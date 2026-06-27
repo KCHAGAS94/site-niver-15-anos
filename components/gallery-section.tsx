@@ -10,12 +10,18 @@ import "swiper/css/pagination"
 import { ChevronLeft, ChevronRight, Camera } from "lucide-react"
 
 const galleryImages = [
-  { src: "/img/momento-especial-1.png", alt: "Momento especial 1" },
-  { src: "/img/momento-especial-2.png", alt: "Momento especial 2" },
-  { src: "/img/momento-especial-3.png", alt: "Momento especial 3" },
-  { src: "/img/momento-especial-4.png", alt: "Momento especial 4" },
-  { src: "/img/momento-especial-5.png", alt: "Momento especial 5" },
-  { src: "/img/momento-especial-6.png", alt: "Momento especial 6" },
+  { src: "/img/vitoria/vitoria (1).jpeg", alt: "Momento especial 1" },
+  { src: "/img/vitoria/vitoria (2).jpeg", alt: "Momento especial 2" },
+  { src: "/img/vitoria/vitoria (3).jpeg", alt: "Momento especial 3" },
+  { src: "/img/vitoria/vitoria (4).jpeg", alt: "Momento especial 4" },
+  { src: "/img/vitoria/vitoria (5).jpeg", alt: "Momento especial 5" },
+  { src: "/img/vitoria/vitoria (6).jpeg", alt: "Momento especial 6" },
+  { src: "/img/vitoria/vitoria (7).jpeg", alt: "Momento especial 7" },
+  { src: "/img/vitoria/vitoria (8).jpeg", alt: "Momento especial 8" },
+  { src: "/img/vitoria/vitoria (9).jpeg", alt: "Momento especial 9" },
+  { src: "/img/vitoria/vitoria (10).jpeg", alt: "Momento especial 10" },
+  { src: "/img/vitoria/vitoria (11).jpeg", alt: "Momento especial 11" },
+  { src: "/img/vitoria/vitoria (12).jpeg", alt: "Momento especial 12" },
 ]
 
 export function GallerySection() {

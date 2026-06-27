@@ -6,8 +6,12 @@ export function HeroSection() {
   return (
     <section className="relative h-screen w-full overflow-hidden">
       {/* Background Image da aniversariante */}
+      {/* Background Image da aniversariante */}
       <div className="absolute inset-0">
-        <div className="absolute inset-0 bg-[url('/img/capa.png')] bg-cover bg-center bg-no-repeat opacity-80" />
+        <div
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-80"
+          style={{ backgroundImage: "url('/img/vitoria/vitoria (8).jpeg')" }}
+        />
         <div className="absolute inset-0 bg-black/60" />
       </div>
 
