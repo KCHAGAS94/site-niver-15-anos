@@ -70,6 +70,14 @@ export default function CheckoutPage() {
     router.push("/#inicio")
   }
 
+  const closeCreditDialog = () => {
+    const wasApproved = creditDialogState === 'approved'
+    setCreditDialogState('closed')
+    if (wasApproved) {
+      router.push("/#inicio")
+    }
+  }
+
   useEffect(() => {
     try {
       const raw = sessionStorage.getItem("checkoutSelection")
@@ -591,28 +599,26 @@ export default function CheckoutPage() {
                 left: 0,
                 transform: 'none',
                 borderRadius: 0,
-                padding: 0
+                padding: 0,
+                display: 'grid',
+                placeItems: 'center',
+                boxSizing: 'border-box',
+                overflow: 'auto'
               }}
             >
               <div style={{
                 width: '100%',
-                height: '100%',
-                display: 'grid',
-                placeItems: 'center',
+                maxWidth: 560,
+                minHeight: 'auto',
+                borderRadius: 24,
                 padding: 24,
-                background: 'rgba(255,255,255,0.98)'
+                background: 'white',
+                boxShadow: '0 32px 80px rgba(0,0,0,0.12)',
+                display: 'grid',
+                gap: 24,
+                textAlign: 'center',
+                margin: '0 auto'
               }}>
-                <div style={{
-                  width: '100%',
-                  maxWidth: 560,
-                  borderRadius: 24,
-                  padding: 32,
-                  background: 'white',
-                  boxShadow: '0 32px 80px rgba(0,0,0,0.12)',
-                  display: 'grid',
-                  gap: 24,
-                  textAlign: 'center'
-                }}>
                   <DialogHeader>
                     <DialogTitle>
                       {creditDialogState === 'approved' ? 'Pagamento aprovado' : creditDialogState === 'processing' ? 'Processando pagamento' : 'Erro no pagamento'}
@@ -658,7 +664,7 @@ export default function CheckoutPage() {
                     {(creditDialogState === 'approved' || creditDialogState === 'error') && (
                       <button
                         type="button"
-                        onClick={() => setCreditDialogState('closed')}
+                        onClick={closeCreditDialog}
                         style={primaryButtonStyle()}
                       >
                         Fechar
@@ -666,7 +672,6 @@ export default function CheckoutPage() {
                     )}
                   </DialogFooter>
                 </div>
-              </div>
             </DialogContent>
           </Dialog>
         </div>
