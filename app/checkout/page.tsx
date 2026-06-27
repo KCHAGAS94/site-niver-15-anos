@@ -55,6 +55,8 @@ export default function CheckoutPage() {
   const [paymentId, setPaymentId] = useState<string | number | null>(null)
   const [paymentStatus, setPaymentStatus] = useState<string | null>(null)
   const [approvalModalOpen, setApprovalModalOpen] = useState(false)
+  const [creditDialogState, setCreditDialogState] = useState<'closed' | 'processing' | 'approved' | 'error'>('closed')
+  const [creditDialogMessage, setCreditDialogMessage] = useState<string | null>(null)
   const [progress, setProgress] = useState<number>(0)
   const [validationErrors, setValidationErrors] = useState<{ name?: string; email?: string }>({})
   const nameRef = useRef<HTMLInputElement | null>(null)
@@ -103,6 +105,8 @@ export default function CheckoutPage() {
     setPaymentId(null)
     setPaymentStatus(null)
     setApprovalModalOpen(false)
+    setCreditDialogState('closed')
+    setCreditDialogMessage(null)
     setProgress(0)
     setMessage(null)
   }, [method])
@@ -171,10 +175,20 @@ export default function CheckoutPage() {
           const status = data?.status || data?.payment_status || null
           setPaymentStatus(status)
           if (status === 'approved' || status === 'paid') {
-            setApprovalModalOpen(true)
+            if (creditDialogState !== 'approved') {
+              setCreditDialogState('approved')
+              setCreditDialogMessage('Pagamento aprovado com sucesso!')
+            }
             setMessage('Compra aprovada — obrigado!')
             setQr(null)
             setProgress(100)
+            stopped = true
+          } else if (status === 'pending' || status === 'in_process') {
+            setCreditDialogState('processing')
+            setCreditDialogMessage('Pagamento em processamento. Aguarde a confirmação do banco.')
+          } else if (status === 'rejected' || status === 'cancelled' || status === 'failed') {
+            setCreditDialogState('error')
+            setCreditDialogMessage('Pagamento reprovado. Verifique os dados do cartão e tente novamente.')
             stopped = true
           }
         }
@@ -323,7 +337,7 @@ export default function CheckoutPage() {
                       style={{ position: "absolute", opacity: 0, width: 0, height: 0 }}
                     />
                     <span style={{ fontSize: 20, lineHeight: 1 }}>▣</span>
-                    <span>Cartão</span>
+                    <span>Crédito</span>
                   </label>
                 </div>
               </div>
@@ -387,6 +401,8 @@ export default function CheckoutPage() {
                   onSubmit={async (data) => {
                     setLoading(true)
                     setMessage(null)
+                    setCreditDialogState('processing')
+                    setCreditDialogMessage('Processando pagamento com cartão. Este modal ficará aberto até que o pagamento seja aprovado.')
                     try {
                       const paymentBody = {
                         amount,
@@ -431,13 +447,25 @@ export default function CheckoutPage() {
                         'Pagamento criado: ' + paymentStatusResult
 
                       setMessage(statusMessage)
+                      setPaymentStatus(paymentStatusResult)
+                      setPaymentId(result?.id || null)
+
                       if (paymentStatusResult === 'approved') {
-                        setPaymentStatus('approved')
-                        setApprovalModalOpen(true)
+                        setCreditDialogState('approved')
+                        setCreditDialogMessage('Pagamento aprovado com sucesso!')
                         setCardholderDocument("")
+                      } else if (paymentStatusResult === 'pending' || paymentStatusResult === 'in_process') {
+                        setCreditDialogState('processing')
+                        setCreditDialogMessage('Pagamento em processamento. Aguarde a confirmação do banco.')
+                      } else {
+                        setCreditDialogState('processing')
+                        setCreditDialogMessage('Pagamento criado. Aguardando confirmação do banco.')
                       }
                     } catch (error: any) {
-                      setMessage(error?.message ?? String(error))
+                      const userMessage = error?.message ?? String(error)
+                      setMessage(userMessage)
+                      setCreditDialogState('error')
+                      setCreditDialogMessage(userMessage)
                     } finally {
                       setLoading(false)
                     }
@@ -542,6 +570,103 @@ export default function CheckoutPage() {
                   Fechar
                 </button>
               </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
+          <Dialog
+            open={creditDialogState !== 'closed'}
+            onOpenChange={(open) => {
+              if (!open && creditDialogState === 'processing') return
+              if (!open) setCreditDialogState('closed')
+            }}
+          >
+            <DialogContent
+              showCloseButton={creditDialogState !== 'processing'}
+              style={{
+                width: '100vw',
+                height: '100vh',
+                maxWidth: '100vw',
+                maxHeight: '100vh',
+                top: 0,
+                left: 0,
+                transform: 'none',
+                borderRadius: 0,
+                padding: 0
+              }}
+            >
+              <div style={{
+                width: '100%',
+                height: '100%',
+                display: 'grid',
+                placeItems: 'center',
+                padding: 24,
+                background: 'rgba(255,255,255,0.98)'
+              }}>
+                <div style={{
+                  width: '100%',
+                  maxWidth: 560,
+                  borderRadius: 24,
+                  padding: 32,
+                  background: 'white',
+                  boxShadow: '0 32px 80px rgba(0,0,0,0.12)',
+                  display: 'grid',
+                  gap: 24,
+                  textAlign: 'center'
+                }}>
+                  <DialogHeader>
+                    <DialogTitle>
+                      {creditDialogState === 'approved' ? 'Pagamento aprovado' : creditDialogState === 'processing' ? 'Processando pagamento' : 'Erro no pagamento'}
+                    </DialogTitle>
+                    <DialogDescription>
+                      {creditDialogState === 'approved'
+                        ? 'O pagamento foi aprovado com sucesso.'
+                        : creditDialogState === 'processing'
+                        ? 'Aguarde enquanto confirmamos o pagamento com o banco. Este modal permanecerá aberto até que a transação seja processada.'
+                        : 'Ocorreu um problema ao processar o pagamento. Verifique os dados do cartão e tente novamente.'}
+                    </DialogDescription>
+                  </DialogHeader>
+
+                  <div style={{ display: 'grid', gap: 18, textAlign: 'center', alignItems: 'center' }}>
+                    <div style={{ display: 'grid', placeItems: 'center', gap: 12 }}>
+                      <div style={{
+                        width: 92,
+                        height: 92,
+                        borderRadius: '50%',
+                        display: 'grid',
+                        placeItems: 'center',
+                        background: creditDialogState === 'approved' ? '#dcfce7' : creditDialogState === 'processing' ? '#eff6ff' : '#fee2e2',
+                        border: creditDialogState === 'approved' ? '2px solid #22c55e' : creditDialogState === 'processing' ? '2px solid #3b82f6' : '2px solid #ef4444',
+                        margin: '0 auto'
+                      }}>
+                        <span style={{ fontSize: 42, color: creditDialogState === 'approved' ? '#16a34a' : creditDialogState === 'processing' ? '#1d4ed8' : '#b91c1c' }}>
+                          {creditDialogState === 'approved' ? '✓' : creditDialogState === 'processing' ? '⏳' : '✕'}
+                        </span>
+                      </div>
+                      <div style={{ fontSize: 16, fontWeight: 600, color: creditDialogState === 'approved' ? '#166534' : creditDialogState === 'processing' ? '#1d4ed8' : '#991b1b' }}>
+                        {creditDialogState === 'approved' ? 'Aprovado' : creditDialogState === 'processing' ? 'Em processamento' : 'Pagamento não aprovado'}
+                      </div>
+                    </div>
+
+                    {creditDialogMessage && (
+                      <div style={{ fontSize: 14, color: 'var(--color-foreground)', lineHeight: 1.6 }}>
+                        {creditDialogMessage}
+                      </div>
+                    )}
+                  </div>
+
+                  <DialogFooter>
+                    {(creditDialogState === 'approved' || creditDialogState === 'error') && (
+                      <button
+                        type="button"
+                        onClick={() => setCreditDialogState('closed')}
+                        style={primaryButtonStyle()}
+                      >
+                        Fechar
+                      </button>
+                    )}
+                  </DialogFooter>
+                </div>
+              </div>
             </DialogContent>
           </Dialog>
         </div>
