@@ -192,12 +192,13 @@ export default function CheckoutPage() {
             setProgress(100)
             stopped = true
           } else if (status === 'pending' || status === 'in_process') {
-            setCreditDialogState('processing')
-            setCreditDialogMessage('Pagamento em processamento. Aguarde a confirmação do banco.')
-          } else if (status === 'rejected' || status === 'cancelled' || status === 'failed') {
-            setCreditDialogState('error')
-            setCreditDialogMessage('Pagamento reprovado. Verifique os dados do cartão e tente novamente.')
-            stopped = true
+            if (method === 'credit') {
+              setCreditDialogState('processing')
+              setCreditDialogMessage('Pagamento em processamento. Aguarde a confirmação do banco.')
+            } else {
+              setCreditDialogState('closed')
+              setCreditDialogMessage(null)
+            }
           }
         }
       } catch (e) {
@@ -205,8 +206,6 @@ export default function CheckoutPage() {
       }
     }
 
-    // progress updater while waiting
-    setProgress(0)
     const progressInterval = setInterval(() => {
       setProgress((p) => Math.min(90, Math.round((p + Math.random() * 10) * 10) / 10))
     }, 1000)

@@ -51,7 +51,7 @@ export function AboutSection() {
           {/* Text Content */}
           <div className="text-center md:text-left">
             <h3 className="font-serif text-3xl text-primary md:text-4xl">
-              Vitória
+              Vitória Emanuelly
             </h3>
             <div className="mt-2 flex items-center justify-center gap-2 text-accent md:justify-start">
               <Star className="h-4 w-4 fill-accent" />

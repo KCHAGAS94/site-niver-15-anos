@@ -41,8 +41,9 @@ export function HeroSection() {
         </div>
 
         <h2 className="mt-6 font-serif text-4xl text-white drop-shadow-md md:text-6xl lg:text-7xl">
-          Vitória
+          Vitória Emanuelly
         </h2>
+        
 
         <p className="mt-8 max-w-md text-sm font-light text-white/90 md:text-base">
           Venha celebrar essa data tão especial comigo!

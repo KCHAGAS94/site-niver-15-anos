@@ -100,7 +100,7 @@ export default function RsvpPage() {
         <div className="text-center space-y-2">
           <h1 className="text-2xl md:text-3xl font-bold text-slate-800 tracking-tight">15 Anos da Vitória</h1>
           <p className="text-sm text-slate-500">Confirme sua presença nos campos abaixo.</p>
-          <p className="text-sm text-slate-500">Confirmar presença até o dia 15/07/2026.</p>
+          <p className="text-sm text-slate-500">Confirmar presença até o dia</p><h1 className="text-4xl md:text-2xl font-bold text-slate-800 tracking-tight">05/08/2026</h1>
         </div>
 
         <form onSubmit={handleSubmit} className="flex flex-col space-y-5">
