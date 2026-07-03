@@ -21,11 +21,11 @@ export function HeroSection() {
       </div>
 
       {/* Content */}
-      <div className="relative z-10 flex h-full flex-col items-center justify-center px-4 text-center">
+      <div className="relative z-10 flex h-full flex-col items-center justify-end px-4 pb-24 text-center">
         <div className="mb-4 flex items-center gap-4">
           <span className="h-px w-16 bg-white/60 md:w-24" />
           <span className="text-sm font-light uppercase tracking-[0.3em] text-white/80">
-            Celebração Especial
+            22/08/2026
           </span>
           <span className="h-px w-16 bg-white/60 md:w-24" />
         </div>
