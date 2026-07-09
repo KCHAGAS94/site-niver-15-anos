@@ -26,6 +26,7 @@ export default function ConfirmadosClient({ confirmacoes = [] }) {
 	const [data, setData] = useState(confirmacoes)
 	const [editingId, setEditingId] = useState(null)
 	const [editingData, setEditingData] = useState(null)
+	const [deletingId, setDeletingId] = useState(null)
 	const [desktopFilters, setDesktopFilters] = useState({
 		nome: '',
 		telefone: '',
@@ -43,7 +44,11 @@ export default function ConfirmadosClient({ confirmacoes = [] }) {
 	}
 
 	const handleDeleteConfirmacao = async (id) => {
-		if (!confirm('Tem certeza que deseja deletar esta confirmação?')) return
+		setDeletingId(id)
+	}
+
+	const handleConfirmDelete = async () => {
+		const id = deletingId
 
 		try {
 			const response = await fetch(`/api/rsvp?id=${id}`, {
@@ -52,13 +57,15 @@ export default function ConfirmadosClient({ confirmacoes = [] }) {
 
 			if (response.ok) {
 				setData((current) => current.filter((item) => item.id !== id))
-				alert('Confirmação deletada com sucesso!')
+				setDeletingId(null)
 			} else {
 				alert('Erro ao deletar a confirmação')
+				setDeletingId(null)
 			}
 		} catch (error) {
 			console.error('Erro ao deletar:', error)
 			alert('Erro ao deletar a confirmação')
+			setDeletingId(null)
 		}
 	}
 
@@ -441,7 +448,7 @@ export default function ConfirmadosClient({ confirmacoes = [] }) {
 			</div>
 
 			{editingId && editingData && (
-				<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+				<div className="fixed inset-0 backdrop-blur-sm bg-white/10 flex items-center justify-center z-50 p-4">
 					<div className="bg-white rounded-3xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
 						<div className="sticky top-0 bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between">
 							<h2 className="text-xl font-bold text-slate-800">Editar Confirmação</h2>
@@ -500,6 +507,58 @@ export default function ConfirmadosClient({ confirmacoes = [] }) {
 								</select>
 							</div>
 
+							{Array.isArray(editingData.acompanhantes) && editingData.acompanhantes.length > 0 && (
+								<div className="border-t border-slate-200 pt-4">
+									<h3 className="text-sm font-bold text-slate-700 mb-3">Acompanhantes</h3>
+									<div className="space-y-3">
+										{editingData.acompanhantes.map((acompanhante, index) => (
+											<div key={index} className="flex gap-2 items-end">
+												<div className="flex-1">
+													<label className="block text-xs font-medium text-slate-600 mb-1">Nome {index + 1}</label>
+													<input
+														type="text"
+														value={acompanhante.nome || ''}
+														onChange={(e) => {
+															const novoAcompanhantes = [...editingData.acompanhantes]
+															novoAcompanhantes[index].nome = e.target.value
+															setEditingData({ ...editingData, acompanhantes: novoAcompanhantes })
+														}}
+														className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800 focus:border-pink-300 focus:ring-2 focus:ring-pink-100 outline-none"
+														placeholder="Nome"
+													/>
+												</div>
+												<div className="w-20">
+													<label className="block text-xs font-medium text-slate-600 mb-1">Idade</label>
+													<input
+														type="number"
+														value={acompanhante.idade || ''}
+														onChange={(e) => {
+															const novoAcompanhantes = [...editingData.acompanhantes]
+															novoAcompanhantes[index].idade = e.target.value
+															setEditingData({ ...editingData, acompanhantes: novoAcompanhantes })
+														}}
+														className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800 focus:border-pink-300 focus:ring-2 focus:ring-pink-100 outline-none"
+														placeholder="Idade"
+													/>
+												</div>
+												<button
+													onClick={() => {
+														const novoAcompanhantes = editingData.acompanhantes.filter((_, i) => i !== index)
+														setEditingData({ ...editingData, acompanhantes: novoAcompanhantes })
+													}}
+													className="bg-red-100 text-red-600 hover:bg-red-200 p-2 rounded-lg transition"
+													title="Remover acompanhante"
+												>
+													<svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+														<path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+													</svg>
+												</button>
+											</div>
+										))}
+									</div>
+								</div>
+							)}
+
 							<div className="flex gap-3 pt-4">
 								<button
 									onClick={handleSaveEdit}
@@ -515,6 +574,32 @@ export default function ConfirmadosClient({ confirmacoes = [] }) {
 									className="flex-1 bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold py-2 px-4 rounded-lg transition"
 								>
 									Cancelar
+								</button>
+							</div>
+						</div>
+					</div>
+				</div>
+			)}
+
+			{deletingId && (
+				<div className="fixed inset-0 backdrop-blur-sm bg-white/10 flex items-center justify-center z-50 p-4">
+					<div className="bg-white rounded-3xl max-w-sm w-full shadow-2xl">
+						<div className="p-8">
+							<h2 className="text-xl font-bold text-slate-800 mb-2">Confirmar Deleção</h2>
+							<p className="text-slate-600 mb-8">Tem certeza que deseja deletar esta confirmação? Esta ação não pode ser desfeita.</p>
+							
+							<div className="flex gap-3">
+								<button
+									onClick={() => setDeletingId(null)}
+									className="flex-1 bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold py-3 px-4 rounded-lg transition"
+								>
+									Cancelar
+								</button>
+								<button
+									onClick={handleConfirmDelete}
+									className="flex-1 bg-red-500 hover:bg-red-600 text-white font-bold py-3 px-4 rounded-lg transition"
+								>
+									Deletar
 								</button>
 							</div>
 						</div>
