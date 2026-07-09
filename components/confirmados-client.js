@@ -23,6 +23,9 @@ function getAge(value) {
 
 export default function ConfirmadosClient({ confirmacoes = [] }) {
 	const [search, setSearch] = useState('')
+	const [data, setData] = useState(confirmacoes)
+	const [editingId, setEditingId] = useState(null)
+	const [editingData, setEditingData] = useState(null)
 	const [desktopFilters, setDesktopFilters] = useState({
 		nome: '',
 		telefone: '',
@@ -39,6 +42,57 @@ export default function ConfirmadosClient({ confirmacoes = [] }) {
 		}))
 	}
 
+	const handleDeleteConfirmacao = async (id) => {
+		if (!confirm('Tem certeza que deseja deletar esta confirmação?')) return
+
+		try {
+			const response = await fetch(`/api/rsvp?id=${id}`, {
+				method: 'DELETE'
+			})
+
+			if (response.ok) {
+				setData((current) => current.filter((item) => item.id !== id))
+				alert('Confirmação deletada com sucesso!')
+			} else {
+				alert('Erro ao deletar a confirmação')
+			}
+		} catch (error) {
+			console.error('Erro ao deletar:', error)
+			alert('Erro ao deletar a confirmação')
+		}
+	}
+
+	const handleEditConfirmacao = (confirmacao) => {
+		setEditingId(confirmacao.id)
+		setEditingData({ ...confirmacao })
+	}
+
+	const handleSaveEdit = async () => {
+		if (!editingData) return
+
+		try {
+			const response = await fetch('/api/rsvp', {
+				method: 'PUT',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify(editingData)
+			})
+
+			if (response.ok) {
+				setData((current) =>
+					current.map((item) => (item.id === editingId ? editingData : item))
+				)
+				setEditingId(null)
+				setEditingData(null)
+				alert('Confirmação atualizada com sucesso!')
+			} else {
+				alert('Erro ao atualizar a confirmação')
+			}
+		} catch (error) {
+			console.error('Erro ao atualizar:', error)
+			alert('Erro ao atualizar a confirmação')
+		}
+	}
+
 	const confirmacoesFiltradas = useMemo(() => {
 		const termo = search.trim().toLowerCase()
 		const filtros = {
@@ -50,12 +104,12 @@ export default function ConfirmadosClient({ confirmacoes = [] }) {
 			data: desktopFilters.data.trim().toLowerCase()
 		}
 
-		return confirmacoes.filter((confirmacao) => {
+		return data.filter((confirmacao) => {
 			const nomePrincipal = String(confirmacao.nomePrincipal || '').toLowerCase()
 			const telefone = String(confirmacao.telefone || '').toLowerCase()
 			const idadePrincipal = String(confirmacao.idadePrincipal || '').toLowerCase()
 			const presenca = String(confirmacao.confirmaPresenca || '').toLowerCase()
-			const data = formatDate(confirmacao.dataEnvio).toLowerCase()
+			const dataStr = formatDate(confirmacao.dataEnvio).toLowerCase()
 			const acompanhantes = Array.isArray(confirmacao.acompanhantes) ? confirmacao.acompanhantes : []
 			const acompanhantesTexto = acompanhantes
 				.map((acompanhante) => `${acompanhante.nome || ''} ${acompanhante.idade || ''}`.trim().toLowerCase())
@@ -68,14 +122,14 @@ export default function ConfirmadosClient({ confirmacoes = [] }) {
 			const matchIdade = !filtros.idade || idadePrincipal.includes(filtros.idade)
 			const matchAcompanhantes = !filtros.acompanhantes || acompanhantesTexto.includes(filtros.acompanhantes)
 			const matchPresenca = !filtros.presenca || presenca.includes(filtros.presenca)
-			const matchData = !filtros.data || data.includes(filtros.data)
+			const matchData = !filtros.data || dataStr.includes(filtros.data)
 
 			return matchBuscaGeral && matchNome && matchTelefone && matchIdade && matchAcompanhantes && matchPresenca && matchData
 		})
-	}, [confirmacoes, desktopFilters, search])
+	}, [data, desktopFilters, search])
 
 	const totais = useMemo(() => {
-		return confirmacoes.reduce(
+		return data.reduce(
 			(accumulator, confirmacao) => {
 				const principalAge = getAge(confirmacao.idadePrincipal)
 				if (principalAge !== null) {
@@ -96,7 +150,7 @@ export default function ConfirmadosClient({ confirmacoes = [] }) {
 			},
 			{ adultos: 0, criancas: 0 }
 		)
-	}, [confirmacoes])
+	}, [data])
 
 	const handleExportExcel = () => {
 		const rows = confirmacoesFiltradas.map((confirmacao) => {
@@ -179,6 +233,7 @@ export default function ConfirmadosClient({ confirmacoes = [] }) {
 									<th className="px-6 py-4 text-xs font-bold uppercase tracking-[0.18em] text-slate-500">Acompanhantes</th>
 									<th className="px-6 py-4 text-xs font-bold uppercase tracking-[0.18em] text-slate-500">Presença</th>
 									<th className="px-6 py-4 text-xs font-bold uppercase tracking-[0.18em] text-slate-500">Data</th>
+									<th className="px-6 py-4 text-xs font-bold uppercase tracking-[0.18em] text-slate-500">Ações</th>
 								</tr>
 								<tr className="border-t border-slate-200 bg-white">
 									<th className="px-4 py-3">
@@ -235,12 +290,13 @@ export default function ConfirmadosClient({ confirmacoes = [] }) {
 											className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700 outline-none transition focus:border-pink-300 focus:bg-white focus:ring-2 focus:ring-pink-100"
 										/>
 									</th>
+									<th className="px-4 py-3"></th>
 								</tr>
 							</thead>
 							<tbody className="divide-y divide-slate-100 bg-white">
 								{confirmacoesFiltradas.length === 0 ? (
 									<tr>
-										<td colSpan={6} className="px-6 py-10 text-center text-slate-500">
+										<td colSpan={7} className="px-6 py-10 text-center text-slate-500">
 											{search.trim() ? 'Nenhum nome encontrado.' : 'Nenhuma confirmação registrada ainda.'}
 										</td>
 									</tr>
@@ -274,6 +330,28 @@ export default function ConfirmadosClient({ confirmacoes = [] }) {
 													</span>
 												</td>
 												<td className="px-6 py-4 text-slate-600">{formatDate(confirmacao.dataEnvio)}</td>
+												<td className="px-6 py-4">
+													<div className="flex gap-2">
+														<button
+															onClick={() => handleEditConfirmacao(confirmacao)}
+															className="rounded-lg bg-blue-100 p-2 text-blue-600 hover:bg-blue-200 transition"
+															title="Editar"
+														>
+															<svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+																<path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+															</svg>
+														</button>
+														<button
+															onClick={() => handleDeleteConfirmacao(confirmacao.id)}
+															className="rounded-lg bg-red-100 p-2 text-red-600 hover:bg-red-200 transition"
+															title="Deletar"
+														>
+															<svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+																<path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+															</svg>
+														</button>
+													</div>
+												</td>
 											</tr>
 										)
 									})
@@ -331,6 +409,29 @@ export default function ConfirmadosClient({ confirmacoes = [] }) {
 											<dt className="font-medium text-slate-500">Data</dt>
 											<dd>{formatDate(confirmacao.dataEnvio)}</dd>
 										</div>
+										<div className="flex items-center justify-between gap-4 border-t border-slate-100 pt-3">
+											<dt className="font-medium text-slate-500">Ações</dt>
+											<dd className="flex gap-2">
+												<button
+													onClick={() => handleEditConfirmacao(confirmacao)}
+													className="rounded-lg bg-blue-100 p-2 text-blue-600 hover:bg-blue-200 transition"
+													title="Editar"
+												>
+													<svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+														<path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+													</svg>
+												</button>
+												<button
+													onClick={() => handleDeleteConfirmacao(confirmacao.id)}
+													className="rounded-lg bg-red-100 p-2 text-red-600 hover:bg-red-200 transition"
+													title="Deletar"
+												>
+													<svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+														<path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+													</svg>
+												</button>
+											</dd>
+										</div>
 									</dl>
 								</article>
 							)
@@ -338,6 +439,88 @@ export default function ConfirmadosClient({ confirmacoes = [] }) {
 					)}
 				</div>
 			</div>
+
+			{editingId && editingData && (
+				<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+					<div className="bg-white rounded-3xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
+						<div className="sticky top-0 bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between">
+							<h2 className="text-xl font-bold text-slate-800">Editar Confirmação</h2>
+							<button
+								onClick={() => {
+									setEditingId(null)
+									setEditingData(null)
+								}}
+								className="text-slate-400 hover:text-slate-600"
+							>
+								✕
+							</button>
+						</div>
+						
+						<div className="p-6 space-y-4">
+							<div>
+								<label className="block text-sm font-medium text-slate-700 mb-1">Nome Principal</label>
+								<input
+									type="text"
+									value={editingData.nomePrincipal || ''}
+									onChange={(e) => setEditingData({ ...editingData, nomePrincipal: e.target.value })}
+									className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-800 focus:border-pink-300 focus:ring-2 focus:ring-pink-100 outline-none"
+								/>
+							</div>
+
+							<div>
+								<label className="block text-sm font-medium text-slate-700 mb-1">Telefone</label>
+								<input
+									type="text"
+									value={editingData.telefone || ''}
+									onChange={(e) => setEditingData({ ...editingData, telefone: e.target.value })}
+									className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-800 focus:border-pink-300 focus:ring-2 focus:ring-pink-100 outline-none"
+								/>
+							</div>
+
+							<div>
+								<label className="block text-sm font-medium text-slate-700 mb-1">Idade</label>
+								<input
+									type="number"
+									value={editingData.idadePrincipal || ''}
+									onChange={(e) => setEditingData({ ...editingData, idadePrincipal: e.target.value })}
+									className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-800 focus:border-pink-300 focus:ring-2 focus:ring-pink-100 outline-none"
+								/>
+							</div>
+
+							<div>
+								<label className="block text-sm font-medium text-slate-700 mb-1">Presença</label>
+								<select
+									value={editingData.confirmaPresenca || ''}
+									onChange={(e) => setEditingData({ ...editingData, confirmaPresenca: e.target.value })}
+									className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-800 focus:border-pink-300 focus:ring-2 focus:ring-pink-100 outline-none"
+								>
+									<option value="">Selecione</option>
+									<option value="Sim">Sim</option>
+									<option value="Não">Não</option>
+								</select>
+							</div>
+
+							<div className="flex gap-3 pt-4">
+								<button
+									onClick={handleSaveEdit}
+									className="flex-1 bg-pink-500 hover:bg-pink-600 text-white font-bold py-2 px-4 rounded-lg transition"
+								>
+									Salvar
+								</button>
+								<button
+									onClick={() => {
+										setEditingId(null)
+										setEditingData(null)
+									}}
+									className="flex-1 bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold py-2 px-4 rounded-lg transition"
+								>
+									Cancelar
+								</button>
+							</div>
+						</div>
+					</div>
+				</div>
+			)}
 		</main>
 	)
 }
