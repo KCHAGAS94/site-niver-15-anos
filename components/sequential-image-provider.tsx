@@ -52,6 +52,9 @@ const GALLERY_IMAGES = [
 ]
 
 const GIFTS = [
+  "/img/presente/valepix100.png",
+  "/img/presente/valepix200.png",
+  "/img/presente/Mimoespecial.png",
   "/img/presente/Noite de Stand-up Comedy.png",
   "/img/presente/Workshop de Automaquiagem.png",
   "/img/presente/Passeio no Shopping.png",

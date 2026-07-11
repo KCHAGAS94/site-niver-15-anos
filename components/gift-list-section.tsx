@@ -21,14 +21,38 @@ interface GiftItem {
 const giftList: GiftItem[] = [
   {
     id: 1,
+    name: "Vale pix R$100,00",
+    description: "Uma contribuição especial para ajudar a realizar nossos planos.",
+    price: 100,
+    category: "Boação",
+    image: "/img/presente/valepix100.png",
+  },
+  {
+    id: 2,
+    name: "Vale pix R$200,00",
+    description: "Uma contribuição especial para ajudar a realizar nossos planos.",
+    price: 200,
+    category: "Boação",
+    image: "/img/presente/valepix200.png",
+  },
+  {
+    id: 3,
+    name: "Mimo Especial",
+    description: "Uma contribuição especial para ajudar a realizar nossos planos.",
+    price: 150,
+    category: "Boação",
+    image: "/img/presente/Mimoespecial.png",
+  },
+  {
+    id: 4,
     name: "Noite de Stand-up Comedy",
     description: "Uma noite leve e divertida para dar boas risadas",
-    price: 99.9,
+    price: 115.9,
     category: "Lazer",
     image: "/img/presente/Noite de Stand-up Comedy.png",
   },
   {
-    id: 2,
+    id: 5,
     name: "Workshop de Automaquiagem",
     description: "Experiência de beleza e técnicas de automaquiagem",
     price: 69.9,
@@ -36,7 +60,7 @@ const giftList: GiftItem[] = [
     image: "/img/presente/Workshop de Automaquiagem.png",
   },
   {
-    id: 3,
+    id: 6,
     name: "Passeio no Shopping (Crédito/Experiência)",
     description: "Um passeio com crédito para aproveitar como quiser",
     price: 139.9,
@@ -44,7 +68,7 @@ const giftList: GiftItem[] = [
     image: "/img/presente/Passeio no Shopping.png",
   },
   {
-    id: 4,
+    id: 7,
     name: "Oficina de Culinária",
     description: "Uma oficina para aprender e se divertir na cozinha",
     price: 84.9,
@@ -52,7 +76,7 @@ const giftList: GiftItem[] = [
     image: "/img/presente/Oficina de Culinária.png",
   },
   {
-    id: 5,
+    id: 8,
     name: "Ensaio Fotográfico",
     description: "Uma experiência para registrar momentos especiais",
     price: 179.9,
@@ -60,7 +84,7 @@ const giftList: GiftItem[] = [
     image: "/img/presente/Ensaio Fotográfico.png",
   },
   {
-    id: 6,
+    id: 9,
     name: "Aula de Dança",
     description: "Uma experiência animada para se movimentar e aprender",
     price: 109.9,
@@ -68,7 +92,7 @@ const giftList: GiftItem[] = [
     image: "/img/presente/Aula de Dança.png",
   },
   {
-    id: 7,
+    id: 10,
     name: "Tarde de Cinema",
     description: "Uma tarde especial para aproveitar um bom filme",
     price: 74.9,
@@ -76,7 +100,7 @@ const giftList: GiftItem[] = [
     image: "/img/presente/Tarde de Cinema.png",
   },
   {
-    id: 8,
+    id: 11,
     name: "Dia de Salão",
     description: "Um dia completo de cuidados e beleza",
     price: 159.9,
@@ -84,7 +108,7 @@ const giftList: GiftItem[] = [
     image: "/img/presente/Dia de Salão.png",
   },
   {
-    id: 9,
+    id: 12,
     name: "Vale-presente Restaurante",
     description: "Um vale para uma refeição especial",
     price: 124.9,
@@ -92,7 +116,7 @@ const giftList: GiftItem[] = [
     image: "/img/presente/Vale-presente Restaurante.jpg",
   },
   {
-    id: 10,
+    id: 13,
     name: "Workshop Design de Sobrancelhas",
     description: "Experiência de design de sobrancelhas com estilo",
     price: 94.9,
@@ -100,7 +124,7 @@ const giftList: GiftItem[] = [
     image: "/img/presente/Workshop Design de Sobrancelhas.png",
   },
   {
-    id: 11,
+    id: 14,
     name: "1 Dia de Hotel (Day Use)",
     description: "Um dia especial de descanso e conforto",
     price: 189.9,
@@ -108,7 +132,7 @@ const giftList: GiftItem[] = [
     image: "/img/presente/1 Dia de Hotel.jpg",
   },
   {
-    id: 12,
+    id: 15,
     name: "Câmera Fotográfica (Locação/Experiência)",
     description: "Uma experiência especial para registrar momentos",
     price: 79.9,
@@ -116,7 +140,7 @@ const giftList: GiftItem[] = [
     image: "/img/presente/camera-fotografica.jpg",
   },
   {
-    id: 13,
+    id: 16,
     name: "1 Dia de \"Sim\" dos Pais",
     description: "Um dia para realizar desejos e viver experiências especiais",
     price: 129.9,
@@ -124,7 +148,7 @@ const giftList: GiftItem[] = [
     image: "/img/presente/1 Dia de Sim dos Pais.png",
   },
   {
-    id: 14,
+    id: 17,
     name: "Dia de Spa",
     description: "Relaxamento e cuidados pessoais",
     price: 174.9,
@@ -132,7 +156,7 @@ const giftList: GiftItem[] = [
     image: "/img/presente/Dia de Spa.jpg",
   },
   {
-    id: 15,
+    id: 18,
     name: "Sessão de Manicure",
     description: "Um momento de autocuidado e beleza",
     price: 89.9,
@@ -140,7 +164,7 @@ const giftList: GiftItem[] = [
     image: "/img/presente/Sessão de Manicure.png",
   },
   {
-    id: 16,
+    id: 19,
     name: "Rodízio de Japonês",
     description: "Uma experiência gastronômica especial",
     price: 149.9,
@@ -148,7 +172,7 @@ const giftList: GiftItem[] = [
     image: "/img/presente/Rodízio de Japonês.png",
   },
   {
-    id: 17,
+    id: 20,
     name: "Passeio de Trilha",
     description: "Um passeio ao ar livre para curtir a natureza",
     price: 119.9,
@@ -156,7 +180,7 @@ const giftList: GiftItem[] = [
     image: "/img/presente/Passeio de Trilha.png",
   },
   {
-    id: 18,
+    id: 21,
     name: "Dia de Parque de Diversões",
     description: "Um dia cheio de diversão e aventura",
     price: 169.9,
