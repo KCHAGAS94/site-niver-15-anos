@@ -5,20 +5,20 @@ import { useState } from 'react';
 // Função utilitária para aplicar a máscara de telefone (00) 00000-0000 automaticamente
 const formatarTelefone = (value) => {
   if (!value) return value;
-  
+
   // Remove qualquer caractere que não seja número
   const apenasNumeros = value.replace(/\D/g, '');
-  
+
   // Se tiver até 2 números, formata como: (11
   if (apenasNumeros.length <= 2) {
     return `(${apenasNumeros}`;
   }
-  
+
   // Se tiver até 7 números, formata como: (11) 9999
   if (apenasNumeros.length <= 7) {
     return `(${apenasNumeros.slice(0, 2)}) ${apenasNumeros.slice(2)}`;
   }
-  
+
   // Se for celular completo (11 dígitos), formata como: (11) 99999-9999
   return `(${apenasNumeros.slice(0, 2)}) ${apenasNumeros.slice(2, 7)}-${apenasNumeros.slice(7, 11)}`;
 };
@@ -95,7 +95,7 @@ export default function RsvpPage() {
   return (
     <div className="min-h-screen bg-slate-50 px-4 py-8 flex flex-col justify-center items-center font-sans">
       <div className="w-full max-w-md bg-white rounded-3xl shadow-sm border border-slate-100 p-6 md:p-8 space-y-6">
-        
+
         {/* Cabeçalho do Card */}
         <div className="text-center space-y-2">
           <h1 className="text-2xl md:text-3xl font-bold text-slate-800 tracking-tight">15 Anos da Vitória</h1>
@@ -104,7 +104,7 @@ export default function RsvpPage() {
         </div>
 
         <form onSubmit={handleSubmit} className="flex flex-col space-y-5">
-          
+
           {/* Nome do Convidado Principal */}
           <div className="flex flex-col space-y-1">
             <label className="text-sm font-semibold text-slate-700 ml-1">Nome completo do convidado principal</label>
@@ -188,7 +188,7 @@ export default function RsvpPage() {
                 <div className="space-y-4">
                   {acompanhantes.map((acompanhante, index) => (
                     <div key={index} className="p-5 bg-slate-50 border border-slate-200 rounded-2xl relative space-y-4">
-                      
+
                       {/* Botão de Remover Acompanhante */}
                       <button
                         type="button"
