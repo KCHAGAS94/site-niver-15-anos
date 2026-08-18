@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react'
 import { Trash2 } from 'lucide-react'
 import { AdminPagesHeader } from '@/components/admin-pages-header'
+import { AdminGate } from '@/components/admin-gate'
 
 function formatDate(value) {
   if (!value) return '-'
@@ -144,6 +145,7 @@ export default function RelpagClient({ eventos = [] }) {
   }, [eventosState])
 
   return (
+    <AdminGate>
     <main className="min-h-screen bg-slate-50 px-4 py-24 md:py-28">
       <div className="mx-auto w-full max-w-7xl">
         <AdminPagesHeader />
@@ -354,5 +356,6 @@ export default function RelpagClient({ eventos = [] }) {
         </div>
       </div>
     </main>
+    </AdminGate>
   )
 }
