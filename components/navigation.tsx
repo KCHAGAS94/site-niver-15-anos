@@ -11,6 +11,7 @@ const navItems = [
   { href: "#galeria", label: "GALERIA" },
   { href: "#local", label: "LOCAL" },
   { href: "#presentes", label: "PRESENTES" },
+  { href: "/convidados", label: "CONVIDADOS" },
 ]
 
 export function Navigation() {
@@ -56,7 +57,7 @@ export function Navigation() {
           {navItems.map((item) => (
             <li key={item.href}>
               <a
-                href={isHomePage ? item.href : `/${item.href}`}
+                href={item.href.startsWith("/") ? item.href : isHomePage ? item.href : `/${item.href}`}
                 className={cn(
                   "text-sm font-medium uppercase tracking-wider transition-colors hover:text-primary",
                   showSolidHeader ? "text-foreground" : "text-white"
@@ -98,7 +99,7 @@ export function Navigation() {
           {navItems.map((item) => (
             <li key={item.href}>
               <a
-                href={isHomePage ? item.href : `/${item.href}`}
+                href={item.href.startsWith("/") ? item.href : isHomePage ? item.href : `/${item.href}`}
                 onClick={() => setIsMobileMenuOpen(false)}
                 className="block py-3 text-center text-sm font-medium uppercase tracking-wider text-foreground transition-colors hover:text-primary"
               >

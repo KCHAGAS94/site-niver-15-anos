@@ -47,6 +47,45 @@ export default function ConfirmadosClient({ confirmacoes = [] }) {
 		setDeletingId(id)
 	}
 
+	const [togglingKey, setTogglingKey] = useState(null)
+
+	const handleTogglePresente = async (confirmacao, acompanhanteIndex = null) => {
+		const key = `${confirmacao.id}-${acompanhanteIndex ?? 'principal'}`
+		setTogglingKey(key)
+
+		const atualizado = { ...confirmacao }
+
+		if (acompanhanteIndex === null) {
+			atualizado.presente = !confirmacao.presente
+		} else {
+			const acompanhantes = Array.isArray(confirmacao.acompanhantes) ? [...confirmacao.acompanhantes] : []
+			acompanhantes[acompanhanteIndex] = {
+				...acompanhantes[acompanhanteIndex],
+				presente: !acompanhantes[acompanhanteIndex]?.presente
+			}
+			atualizado.acompanhantes = acompanhantes
+		}
+
+		try {
+			const response = await fetch('/api/rsvp', {
+				method: 'PUT',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify(atualizado)
+			})
+
+			if (response.ok) {
+				setData((current) => current.map((item) => (item.id === confirmacao.id ? atualizado : item)))
+			} else {
+				alert('Erro ao atualizar a presença')
+			}
+		} catch (error) {
+			console.error('Erro ao atualizar presença:', error)
+			alert('Erro ao atualizar a presença')
+		} finally {
+			setTogglingKey(null)
+		}
+	}
+
 	const handleConfirmDelete = async () => {
 		const id = deletingId
 
@@ -133,6 +172,15 @@ export default function ConfirmadosClient({ confirmacoes = [] }) {
 
 			return matchBuscaGeral && matchNome && matchTelefone && matchIdade && matchAcompanhantes && matchPresenca && matchData
 		})
+			.sort((a, b) => {
+				const presenteA = Boolean(a.presente)
+				const presenteB = Boolean(b.presente)
+				if (presenteA !== presenteB) return presenteA ? 1 : -1
+
+				const nomeA = String(a.nomePrincipal || '').toLowerCase()
+				const nomeB = String(b.nomePrincipal || '').toLowerCase()
+				return nomeA.localeCompare(nomeB, 'pt-BR')
+			})
 	}, [data, desktopFilters, search])
 
 	const totais = useMemo(() => {
@@ -314,7 +362,16 @@ export default function ConfirmadosClient({ confirmacoes = [] }) {
 										return (
 											<tr key={confirmacao.id} className="align-top hover:bg-slate-50/80">
 												<td className="px-6 py-4">
-													<div className="font-semibold text-slate-800">{confirmacao.nomePrincipal || '-'}</div>
+													<label className="flex cursor-pointer items-start gap-2">
+														<input
+															type="checkbox"
+															checked={Boolean(confirmacao.presente)}
+															disabled={togglingKey === `${confirmacao.id}-principal`}
+															onChange={() => handleTogglePresente(confirmacao)}
+															className="mt-1 h-4 w-4 rounded border-slate-300 text-pink-500 focus:ring-pink-300"
+														/>
+														<span className="font-semibold text-slate-800">{confirmacao.nomePrincipal || '-'}</span>
+													</label>
 												</td>
 												<td className="px-6 py-4 text-slate-600">{confirmacao.telefone || '-'}</td>
 												<td className="px-6 py-4 text-slate-600">{confirmacao.idadePrincipal || '-'}</td>
@@ -323,7 +380,18 @@ export default function ConfirmadosClient({ confirmacoes = [] }) {
 														<ul className="space-y-1">
 															{acompanhantes.map((acompanhante, index) => (
 																<li key={`${confirmacao.id}-ac-${index}`}>
-																	{index + 1}. {acompanhante.nome || '-'} {acompanhante.idade ? `(${acompanhante.idade} anos)` : ''}
+																	<label className="flex cursor-pointer items-start gap-2">
+																		<input
+																			type="checkbox"
+																			checked={Boolean(acompanhante.presente)}
+																			disabled={togglingKey === `${confirmacao.id}-${index}`}
+																			onChange={() => handleTogglePresente(confirmacao, index)}
+																			className="mt-1 h-4 w-4 rounded border-slate-300 text-pink-500 focus:ring-pink-300"
+																		/>
+																		<span>
+																			{index + 1}. {acompanhante.nome || '-'} {acompanhante.idade ? `(${acompanhante.idade} anos)` : ''}
+																		</span>
+																	</label>
 																</li>
 															))}
 														</ul>
@@ -380,10 +448,19 @@ export default function ConfirmadosClient({ confirmacoes = [] }) {
 							return (
 								<article key={confirmacao.id} className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
 									<div className="flex items-start justify-between gap-4">
-										<div>
-											<h2 className="text-lg font-bold text-slate-800">{confirmacao.nomePrincipal || '-'}</h2>
-											<p className="mt-1 text-sm text-slate-500">{confirmacao.telefone || '-'}</p>
-										</div>
+										<label className="flex cursor-pointer items-start gap-2">
+											<input
+												type="checkbox"
+												checked={Boolean(confirmacao.presente)}
+												disabled={togglingKey === `${confirmacao.id}-principal`}
+												onChange={() => handleTogglePresente(confirmacao)}
+												className="mt-1 h-4 w-4 rounded border-slate-300 text-pink-500 focus:ring-pink-300"
+											/>
+											<div>
+												<h2 className="text-lg font-bold text-slate-800">{confirmacao.nomePrincipal || '-'}</h2>
+												<p className="mt-1 text-sm text-slate-500">{confirmacao.telefone || '-'}</p>
+											</div>
+										</label>
 										<span className={`inline-flex rounded-full px-3 py-1 text-xs font-bold ${confirmacao.confirmaPresenca === 'Sim' ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`}>
 											{confirmacao.confirmaPresenca || '-'}
 										</span>
@@ -401,9 +478,20 @@ export default function ConfirmadosClient({ confirmacoes = [] }) {
 													<ol className="space-y-1 pl-4">
 														{acompanhantes.map((acompanhante, index) => (
 															<li key={`${confirmacao.id}-mobile-${index}`}>
-																<span className="font-medium text-slate-700">{index + 1}.</span>{' '}
-																{String(acompanhante.nome || '-').toUpperCase()}{' '}
-																{acompanhante.idade ? `(${acompanhante.idade} anos)` : ''}
+																<label className="flex cursor-pointer items-start gap-2">
+																	<input
+																		type="checkbox"
+																		checked={Boolean(acompanhante.presente)}
+																		disabled={togglingKey === `${confirmacao.id}-${index}`}
+																		onChange={() => handleTogglePresente(confirmacao, index)}
+																		className="mt-1 h-4 w-4 rounded border-slate-300 text-pink-500 focus:ring-pink-300"
+																	/>
+																	<span>
+																		<span className="font-medium text-slate-700">{index + 1}.</span>{' '}
+																		{String(acompanhante.nome || '-').toUpperCase()}{' '}
+																		{acompanhante.idade ? `(${acompanhante.idade} anos)` : ''}
+																	</span>
+																</label>
 															</li>
 														))}
 													</ol>

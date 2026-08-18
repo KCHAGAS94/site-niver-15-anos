@@ -8,6 +8,7 @@ import { Menu, X } from 'lucide-react'
 const links = [
   { href: '/confirmados', label: 'Confirmados' },
   { href: '/relpag', label: 'Relatório de pagamentos' },
+  { href: '/convidados', label: 'Convidados' },
 ]
 
 export function AdminPagesHeader() {
