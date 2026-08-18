@@ -152,7 +152,7 @@ export function ConvidadosClient({ confirmacoes = [] }: { confirmacoes: Confirma
       <div className="mx-auto w-full max-w-7xl">
         <AdminPagesHeader />
 
-        <div className="mb-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5 md:mb-6 md:p-6">
+        <div className="sticky top-16 z-40 mb-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5 md:top-18 md:mb-6 md:p-6">
           <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.2em] text-pink-500">Convidados</p>
