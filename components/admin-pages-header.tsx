@@ -9,6 +9,7 @@ const links = [
   { href: '/confirmados', label: 'Confirmados' },
   { href: '/relpag', label: 'Relatório de pagamentos' },
   { href: '/convidados', label: 'Convidados' },
+  { href: '/chegada', label: 'Chegada' },
 ]
 
 export function AdminPagesHeader() {
