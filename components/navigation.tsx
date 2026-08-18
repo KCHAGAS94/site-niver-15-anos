@@ -11,7 +11,6 @@ const navItems = [
   { href: "#galeria", label: "GALERIA" },
   { href: "#local", label: "LOCAL" },
   { href: "#presentes", label: "PRESENTES" },
-  { href: "/convidados", label: "CONVIDADOS" },
 ]
 
 export function Navigation() {
